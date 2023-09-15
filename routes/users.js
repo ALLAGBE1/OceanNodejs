@@ -70,6 +70,17 @@ router.get('/partenaires', (req, res, next) => {
     .catch((err) => next(err));
 });
 
+// Seache Location 
+router.get('/locations', (req, res, next) => {
+  User.find({location: {$ne: null}})  // Cette requête trouve tous les utilisateurs où documentfournirId n'est pas une chaîne vide.
+    .then((position) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(position);
+    })
+    .catch((err) => next(err));
+});
+
 // Route de téléchargement
 router.get('/download/:filename', (req, res) => {
   console.log(req.params.filename);
@@ -117,109 +128,185 @@ router.put('/partenaires/:partenaireId', (req, res, next) => {
     .catch((err) => next(err));
 });
 
-// 
-// router.get('/prestataires/soudeur', (req, res, next) => {
-//   User.find({domaineactivite: 'Soudeur', prestataire: true })
-//     .then((prestataires) => {
-//       res.statusCode = 200;
-//       res.setHeader('Content-Type', 'application/json');
-//       res.json(prestataires);
-//     })
-//     .catch((err) => next(err));
-// });
 
-// router.get('/prestataires/:type', (req, res, next) => {
-//   const type = req.params.type; // Récupérer le type de prestataire à partir du paramètre
+// Route pour récupérer les prestataires par type et emplacement géospatial
+router.get('/prestataires/:type', async (req, res) => {
+  const { type } = req.params;
+  const { lat, lng } = req.query;
 
-//   User.find({ domaineactivite: type = ('Soudeur' || 'Plombier'), prestataire: true })
-//     .then((prestataires) => {
-//       res.statusCode = 200;
-//       res.setHeader('Content-Type', 'application/json');
-//       res.json(prestataires);
-//     })
-//     .catch((err) => next(err));
-// });
-
-router.get('/prestataires/:type', (req, res, next) => {
-  const type = req.params.type; // Récupérer le type de prestataire à partir du paramètre
-
-  if (type === 'Électricien' || type === 'Garagiste' || type === 'Plombier' || type === 'Mécanicien') {
-    User.find({ domaineactivite: type, prestataire: true })
-      .then((prestataires) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        res.json(prestataires);
-      })
-      .catch((err) => next(err));
-  } else {
-    // Gérer le cas où le type n'est ni "Soudeur" ni "Plombier"
+  if (!['Électricien', 'Garagiste', 'Plombier', 'Mécanicien'].includes(type)) {
+    // Gérer le cas où le type n'est pas valide
     res.statusCode = 400;
     res.setHeader('Content-Type', 'application/json');
-    res.json({ message: "Type invalide" });
+    return res.json({ message: 'Type invalide' });
+  }
+
+  try {
+    // Recherche géospatiale des prestataires du type spécifié
+    const users = await User.find({
+      domaineactivite: type,
+      prestataire: true,
+      location: {$ne: null},
+      location: {
+        $geoWithin: { $centerSphere: [[lng, lat], 500 / 6378100] }
+      }
+    });
+
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json(users);
+  } catch (err) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ success: false, message: err.message });
   }
 });
 
+// :::::: Qui travaillait 
+// router.get('/prestataires/:type', (req, res, next) => {
+//   const type = req.params.type; // Récupérer le type de prestataire à partir du paramètre
 
+//   if (type === 'Électricien' || type === 'Garagiste' || type === 'Plombier' || type === 'Mécanicien') {
+//     User.find({ domaineactivite: type, prestataire: true })
+//       .then((prestataires) => {
+//         res.statusCode = 200;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json(prestataires);
+//       })
+//       .catch((err) => next(err));
+//   } else {
+//     // Gérer le cas où le type n'est ni "Soudeur" ni "Plombier"
+//     res.statusCode = 400;
+//     res.setHeader('Content-Type', 'application/json');
+//     res.json({ message: "Type invalide" });
+//   }
+// });
+// ::::::: Fin Qui travaillait 
 
-// app.use(express.static(path.join(__dirname, 'public')));
-
-
-// router.get('/partenaires', (req, res, next) => {
-//   User.find({ documentfournirId: { $ne: '' } }) // $ne signifie "not equal", donc on cherche tous les documents où documentfournirId n'est pas égal à ''
-//     .then((users) => {
-//       res.statusCode = 200;
-//       res.setHeader('Content-Type', 'application/json');
-//       res.json(users);
-//     })
-//     .catch((err) => next(err));
+// ::::::::::::::::: Recherche par géolocalisation 1
+// router.get('/prestataires/:type', async (req, res) => {
+//   const { lat, lng } = req.query;
+  
+//   try {
+//     const users = await User.find({
+//       location: {
+//         $geoWithin: { $centerSphere: [[lng, lat], 500 / 6378100] }
+//       }
+//     });
+  
+//     res.statusCode = 200;
+//     res.setHeader('Content-Type', 'application/json');
+//     res.json(users);
+//   } catch (err) {
+//     res.statusCode = 500;
+//     res.setHeader('Content-Type', 'application/json');
+//     res.json({ success: false, message: err.message });
+//   }
 // });
 
+// ::::: Fin de la recherche par géolocalisation 1
 
-router.post('/sinscrire', upload.single('documentfournirId'), (req, res, next) => {
+// ::::::::::::  Recherche par géolocalisation 2
+// router.get('/utilisateurs', async (req, res, next) => {
+//   try {
+//     const { latitude, longitude } = req.query; // Obtenez les coordonnées de la requête
+
+//     // Assurez-vous que latitude et longitude sont des nombres valides
+//     if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+//       res.statusCode = 400;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json({ success: false, status: 'Coordonnées de position invalides.' });
+//       return;
+//     }
+
+//     // Utilisez MongoDB pour rechercher les utilisateurs à moins de 500 mètres de la position spécifiée
+//     const usersNearby = await User.find({
+//       location: {
+//         $near: {
+//           $geometry: {
+//             type: 'Point',
+//             coordinates: [parseFloat(longitude), parseFloat(latitude)] // Ordre inversé pour MongoDB (longitude, latitude)
+//           },
+//           $maxDistance: 500 // Distance en mètres
+//         }
+//       }
+//     });
+
+//     // Construisez la réponse avec les utilisateurs à proximité
+//     const results = usersNearby.map(user => {
+//       return {
+//         nomprenom: user.nomprenom,
+//         location: user.location
+//       };
+//     });
+
+//     res.statusCode = 200;
+//     res.setHeader('Content-Type', 'application/json');
+//     res.json(results);
+//   } catch (err) {
+//     console.error(err);
+//     res.statusCode = 500;
+//     res.setHeader('Content-Type', 'application/json');
+//     res.json({ success: false, status: 'Une erreur s\'est produite lors de la récupération des utilisateurs.' });
+//   }
+// });
+
+// :::::: Fin de la recherche par géolocalisation 2
+
+router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, next) => {
   // Le fichier sera stocké dans req.file grâce à multer
 
-  User.register(
-    new User({ username: req.body.username }),
-    req.body.password,
-    (err, user) => {
-      if (err) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.json({ err: err });
-        return;
-      }
-      if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
-      if (req.body.email) user.email = req.body.email;
-      if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
-      if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
+  // Extraire la longitude et la latitude du corps de la requête
+  console.log("1111111111111111111111111111");
+  const location = req.body.location;
+  console.log("222222222222222222222222222222");
+  console.log(location);
 
-      // Si un fichier est téléchargé, sauvegardez le chemin dans la base de données
-      if (req.file) {
-        user.documentfournirId = req.file.path;
-      }
+  try {
+    console.log("555555555555555555555555555555555555555");
+    const user = await User.register(
+      new User({ username: req.body.username}),
+      req.body.password
+    );
 
-      user
-        .save()
-        .then((user) => {
-          passport.authenticate('local')(req, res, () => {
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.json({ success: true, status: 'Inscription réussie !' });
-          });
-        })
-        .catch((err) => {
-          res.statusCode = 401;
-          res.setHeader('Content-Type', 'application/json');
-          res.json({
-            success: false,
-            status: 'Nom d\'utilisateur ou mot de passe incorrect !',
-          });
-        });
+    console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
+    if (req.body.email) user.email = req.body.email;
+    if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
+    if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
+
+    console.log("33333333333333333333333333333");
+
+    // Si un fichier est téléchargé, sauvegardez le chemin dans la base de données
+    if (req.file) {
+      user.documentfournirId = req.file.path;
     }
-  );
+
+    // if (req.body.location) user.location = req.body.location;
+    if (req.body.location) {
+      user.location = JSON.parse(req.body.location);
+    }
+
+    console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
+    await user.save();
+
+    passport.authenticate('local')(req, res, () => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json({ success: true, status: 'Inscription réussie !' });
+    });
+  } catch (err) {
+    console.error(err);
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.' });
+  }
 });
 
-// router.post('/sinscrire', (req, res, next) => {
+// router.post('/sinscrire', upload.single('documentfournirId'), (req, res, next) => {
+//   // Le fichier sera stocké dans req.file grâce à multer
+
 //   User.register(
 //     new User({ username: req.body.username }),
 //     req.body.password,
@@ -229,12 +316,31 @@ router.post('/sinscrire', upload.single('documentfournirId'), (req, res, next) =
 //         res.setHeader('Content-Type', 'application/json');
 //         res.json({ err: err });
 //         return;
-//       } 
+//       }
 //       if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
 //       if (req.body.email) user.email = req.body.email;
 //       if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
 //       if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
-//       // if (req.body.documentfournirId) user.documentfournirId = req.body.documentfournirId;
+
+//       // Si un fichier est téléchargé, sauvegardez le chemin dans la base de données
+//       if (req.file) {
+//         user.documentfournirId = req.file.path;
+//       }
+
+//       // if (req.body.latitude && req.body.longitude) {
+//       //   user.location = {
+//       //     type: 'Point',
+//       //     coordinates: [parseFloat(req.body.longitude), parseFloat(req.body.latitude)]
+//       //   };
+//       // }
+
+//       // if (req.body.latitude && req.body.longitude) {
+//       //   user.location = {
+//       //     type: 'Point',
+//       //     coordinates: [req.body.longitude, req.body.latitude]
+//       //   };
+//       // }
+
 //       user
 //         .save()
 //         .then((user) => {
@@ -351,6 +457,97 @@ router.get('/checkJWTtoken', (req, res) => {
 });
 
 
+module.exports = router;
+
+
+
+// ::::::::::::::::
+
+// var express = require('express');
+// const bodyParser = require('body-parser');
+// var User = require('../models/user');
+// var passport = require('passport');
+// var authenticate = require('../authenticate');
+// const cors = require('./cors');
+// const multer = require('multer');
+// const path = require('path');
+// const fs = require('fs');
+
+
+// var router = express.Router();
+// router.use(bodyParser.json());
+
+// // :::::::::::::::::::::::
+// // Configuration de multer pour le stockage des fichiers
+
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, 'public/images'); // Définit le répertoire de stockage
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, file.originalname); // Définit le nom du fichier
+//   }
+// });
+
+// const imageFileFilter = (req, file, cb) => {
+//   if(!file.originalname.match(/\.(pdf)$/)) {
+//       return cb(new Error('Vous ne pouvez télécharger que des fichiers pdf !'), false);
+//   }
+//   cb(null, true);
+// };
+
+// const upload = multer({ storage: storage, fileFilter: imageFileFilter });
+
+// // ::::::::::::::::::::::
+
+// /* GET users listing. */
+// router.get('/', (req, res, next) => {
+//   User.find({})
+//     .then((users) => {
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json(users);
+//     })
+//     .catch((err) => next(err));
+// });
+
+// router.get('/partenaires', (req, res, next) => {
+//   User.find({documentfournirId: {$ne: ''}})  // Cette requête trouve tous les utilisateurs où documentfournirId n'est pas une chaîne vide.
+//     .then((users) => {
+//       // Transformez chaque utilisateur pour ajouter une URL de téléchargement
+//       const transformedUsers = users.map(user => {
+//         user = user.toObject();  // Convertit le document Mongoose en objet JavaScript simple
+//         // user.downloadUrl = `/download/${user.documentfournirId}`;  // Ajoutez l'URL de téléchargement basée sur l'ID du document
+        
+//         // Récupérez uniquement le nom du fichier à partir de documentfournirId
+//         let fileName = path.basename(user.documentfournirId);
+        
+//         // Utilisez ce nom de fichier pour créer l'URL de téléchargement
+//         user.downloadUrl = `/download/${fileName}`;
+
+//         return user;
+//       });
+      
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json(transformedUsers);
+//     })
+//     .catch((err) => next(err));
+// });
+
+// // Route de téléchargement
+// router.get('/download/:filename', (req, res) => {
+//   console.log(req.params.filename);
+//   const file = path.join(__dirname, '../public/images', req.params.filename);
+//   if (fs.existsSync(file)) {
+//     res.download(file);
+//   } else {
+//     res.status(404).send("Fichier non trouvé");
+//   }
+// });
+
+// // http://192.168.0.14:3000/users/download/nom_du_fichier.pdf
+
 // router.get('/partenaires/:partenaireId', (req, res, next) => {
 //   User.findById(req.params.partenaireId) 
 //     .then((user) => {
@@ -385,7 +582,275 @@ router.get('/checkJWTtoken', (req, res) => {
 //     .catch((err) => next(err));
 // });
 
+// // 
+// // router.get('/prestataires/soudeur', (req, res, next) => {
+// //   User.find({domaineactivite: 'Soudeur', prestataire: true })
+// //     .then((prestataires) => {
+// //       res.statusCode = 200;
+// //       res.setHeader('Content-Type', 'application/json');
+// //       res.json(prestataires);
+// //     })
+// //     .catch((err) => next(err));
+// // });
+
+// // router.get('/prestataires/:type', (req, res, next) => {
+// //   const type = req.params.type; // Récupérer le type de prestataire à partir du paramètre
+
+// //   User.find({ domaineactivite: type = ('Soudeur' || 'Plombier'), prestataire: true })
+// //     .then((prestataires) => {
+// //       res.statusCode = 200;
+// //       res.setHeader('Content-Type', 'application/json');
+// //       res.json(prestataires);
+// //     })
+// //     .catch((err) => next(err));
+// // });
+
+// router.get('/prestataires/:type', (req, res, next) => {
+//   const type = req.params.type; // Récupérer le type de prestataire à partir du paramètre
+
+//   if (type === 'Électricien' || type === 'Garagiste' || type === 'Plombier' || type === 'Mécanicien') {
+//     User.find({ domaineactivite: type, prestataire: true })
+//       .then((prestataires) => {
+//         res.statusCode = 200;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json(prestataires);
+//       })
+//       .catch((err) => next(err));
+//   } else {
+//     // Gérer le cas où le type n'est ni "Soudeur" ni "Plombier"
+//     res.statusCode = 400;
+//     res.setHeader('Content-Type', 'application/json');
+//     res.json({ message: "Type invalide" });
+//   }
+// });
 
 
-module.exports = router;
+
+// // app.use(express.static(path.join(__dirname, 'public')));
+
+
+// // router.get('/partenaires', (req, res, next) => {
+// //   User.find({ documentfournirId: { $ne: '' } }) // $ne signifie "not equal", donc on cherche tous les documents où documentfournirId n'est pas égal à ''
+// //     .then((users) => {
+// //       res.statusCode = 200;
+// //       res.setHeader('Content-Type', 'application/json');
+// //       res.json(users);
+// //     })
+// //     .catch((err) => next(err));
+// // });
+
+
+// router.post('/sinscrire', upload.single('documentfournirId'), (req, res, next) => {
+//   // Le fichier sera stocké dans req.file grâce à multer
+
+//   User.register(
+//     new User({ username: req.body.username }),
+//     req.body.password,
+//     (err, user) => {
+//       if (err) {
+//         res.statusCode = 500;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json({ err: err });
+//         return;
+//       }
+//       if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
+//       if (req.body.email) user.email = req.body.email;
+//       if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
+//       if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
+
+//       // Si un fichier est téléchargé, sauvegardez le chemin dans la base de données
+//       if (req.file) {
+//         user.documentfournirId = req.file.path;
+//       }
+
+//       user
+//         .save()
+//         .then((user) => {
+//           passport.authenticate('local')(req, res, () => {
+//             res.statusCode = 200;
+//             res.setHeader('Content-Type', 'application/json');
+//             res.json({ success: true, status: 'Inscription réussie !' });
+//           });
+//         })
+//         .catch((err) => {
+//           res.statusCode = 401;
+//           res.setHeader('Content-Type', 'application/json');
+//           res.json({
+//             success: false,
+//             status: 'Nom d\'utilisateur ou mot de passe incorrect !',
+//           });
+//         });
+//     }
+//   );
+// });
+
+// // router.post('/sinscrire', (req, res, next) => {
+// //   User.register(
+// //     new User({ username: req.body.username }),
+// //     req.body.password,
+// //     (err, user) => {
+// //       if (err) {
+// //         res.statusCode = 500;
+// //         res.setHeader('Content-Type', 'application/json');
+// //         res.json({ err: err });
+// //         return;
+// //       } 
+// //       if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
+// //       if (req.body.email) user.email = req.body.email;
+// //       if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
+// //       if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
+// //       // if (req.body.documentfournirId) user.documentfournirId = req.body.documentfournirId;
+// //       user
+// //         .save()
+// //         .then((user) => {
+// //           passport.authenticate('local')(req, res, () => {
+// //             res.statusCode = 200;
+// //             res.setHeader('Content-Type', 'application/json');
+// //             res.json({ success: true, status: 'Inscription réussie !' });
+// //           });
+// //         })
+// //         .catch((err) => {
+// //           res.statusCode = 401;
+// //           res.setHeader('Content-Type', 'application/json');
+// //           res.json({
+// //             success: false,
+// //             status: 'Nom d\'utilisateur ou mot de passe incorrect !',
+// //           });
+// //         });
+// //     }
+// //   );
+// // });
+
+// router.post('/connexion', /*cors.corsWithOptions,*/ (req, res, next) => {
+//   passport.authenticate('local', (err, user, info) => {
+//     if (err) return next(err);
+
+//     if (!user) {
+//       res.statusCode = 401;
+//       res.setHeader('Content-Type', 'application/json');
+//       const response = {
+//         success: false,
+//         status: 'Connexion échouée !',
+//         err: info,
+//       }
+//       console.log(response);
+//       res.json(response);
+//       return;
+//     }
+//     req.logIn(user, (err) => {
+//       if (err) {
+//         res.statusCode = 401;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json({
+//           success: false,
+//           status: 'Connexion échouée !',
+//           err: "Impossible de connecter l'utilisateur !",
+//         });
+//         console.log(res.json({
+//           success: false,
+//           status: 'Connexion échouée !',
+//           err: "Impossible de connecter l'utilisateur !",
+//         }));
+//         return;
+//       }
+
+//       var token = authenticate.getToken({ _id: req.user._id });
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       result = res.json({
+//         success: true,
+//         status: 'Connexion réussie !',
+//         token: token,
+//         user: user,
+//       });
+//       // console.log(result);
+//       console.log("Super************************");
+//     });
+//   })(req, res, next);
+// });
+
+// router.get('/logout', /*cors.cors,*/ (req, res, next) => {
+//   if (req.session) {
+//     req.session.destroy();
+//     res.clearCookie('session-id');
+//     res.redirect('/');
+//     console.log("T'es logout");
+//   } else {
+//     var err = new Error("Vous n'êtes pas connecté !");
+//     err.status = 403;
+//     next(err);
+//   }
+// });
+
+// router.get(
+//   '/facebook/token',
+//   passport.authenticate('facebook-token'),
+//   (req, res) => {
+//     if (req.user) {
+//       var token = authenticate.getToken({ _id: req.user._id });
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json({
+//         success: true,
+//         token: token,
+//         status: 'Vous êtes connecté avec succès !',
+//       });
+//     }
+//   }
+// );
+
+// router.get('/checkJWTtoken', (req, res) => {
+//   passport.authenticate('jwt', { session: false }, (err, user, info) => {
+//     if (err) return next(err);
+
+//     if (!user) {
+//       res.statusCode = 401;
+//       res.setHeader('Content-Type', 'application/json');
+//       return res.json({ status: 'JWT invalide !', success: false, err: info });
+//     } else {
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       return res.json({ status: 'JWT valide !', success: true, user: user });
+//     }
+//   })(req, res);
+// });
+
+
+// // router.get('/partenaires/:partenaireId', (req, res, next) => {
+// //   User.findById(req.params.partenaireId) 
+// //     .then((user) => {
+// //       res.statusCode = 200;
+// //       res.setHeader('Content-Type', 'application/json');
+// //       res.json(user);
+// //     })
+// //     .catch((err) => next(err));
+// // });
+
+// // router.put('/partenaires/:partenaireId', (req, res, next) => {
+// //   User.findById(req.params.partenaireId) 
+// //     .then((user) => {
+// //       if(user != null) {
+// //         User.findByIdAndUpdate(req.params.partenaireId, { $set: req.body }, { neww: true })
+// //         .then((user) => {
+// //           User.findById(user._id)
+// //           .then((user) => {
+// //             res.statusCode = 200;
+// //             res.setHeader('Content-Type', 'application/json');
+// //             res.json(user); 
+// //           });
+// //         })
+// //         .catch((err) => next(err));
+// //       }
+// //       else {
+// //         err = new Error('Partenaire ' + req.params.partenaireId + ' introuvable');
+// //         err.status = 404;
+// //         return next(err);            
+// //     }
+// //     })
+// //     .catch((err) => next(err));
+// // });
+
+
+
+// module.exports = router;
 

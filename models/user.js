@@ -4,8 +4,6 @@ var Schema = mongoose.Schema;
 var passportLocalMongoose = require('passport-local-mongoose');
 const { File } = require('../db');
 
-
-
 // Schéma utilisateur avec la référence à l'ID du fichier
 var User = new Schema({
     nomprenom: {
@@ -16,11 +14,6 @@ var User = new Schema({
       type: String,
         default: ''
     },
-    // email: {
-    //   type: String,
-    //   unique: true, // Pour s'assurer que l'email est unique
-    //   required: true // L'email est obligatoire
-    // },
     nomcommercial: {
       type: String,
         default: ''
@@ -41,12 +34,18 @@ var User = new Schema({
     documentfournirId: {  // Si vous stockez le chemin du fichier
       type: String,
       default: ''
-    }
-    // Si vous utilisez GridFS :
-    // documentfournirId: {  
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: 'File'
-    // }
+    },
+    location: {
+      type: {
+        type: String, // Don't do `{ location: { type: String } }`
+        default: "Point"
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0],
+        index: '2dsphere'
+      }
+    },
 }, {
     timestamps: true
 });
