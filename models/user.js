@@ -27,6 +27,14 @@ var User = new Schema({
         type: Boolean,
         default: false
     },
+    disponible:   {
+      type: Boolean,
+      default: true
+    },
+    confirmed:   {
+      type: Boolean,
+      default: false
+    },
     prestataire:   {
       type: Boolean,
       default: false
