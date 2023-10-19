@@ -11,9 +11,10 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var domaineActivites = require('./routes/domaineActivite');
 var publiers = require('./routes/publier');
+var commentaireRouter = require('./routes/commentaireRouter');
+var photoProfilRouter = require('./routes/photoProfilRouter');
 
 const cors = require('cors');
-
 
 
 var app = express();
@@ -37,6 +38,8 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/domaineActivite', domaineActivites);
 app.use('/publier', publiers);
+app.use('/comments',commentaireRouter);
+app.use('/photoProfils',photoProfilRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

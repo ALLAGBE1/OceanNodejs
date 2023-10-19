@@ -10,6 +10,12 @@ const fs = require('fs');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 
+const crypto = require('crypto');
+
+function generateRandomCode() {
+  return crypto.randomBytes(3).toString('hex'); // Génère un code hexadécimal de 6 caractères
+}
+
 
 var router = express.Router();
 router.use(bodyParser.json());
@@ -130,6 +136,37 @@ router.put('/partenaires/:partenaireId', (req, res, next) => {
     .catch((err) => next(err));
 });
 
+// ::::::: Gestion de l'envoie du mail
+async function sendConfirmationEmail(userEmail, userName, verificationCode) {
+  // const verificationCode = generateRandomCode();
+
+  // // Enregistrez le code généré dans la base de données
+  // await saveRandomCodeToDB(User._id, verificationCode);
+
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'emailjosue256@gmail.com', // votre email
+      pass: 'usrgwuokswffsrek', // votre mot de passe
+    },
+  });
+
+  let mailOptions = {
+    from: 'emailjosue256@gmail.com',
+    to: userEmail,
+    subject: 'Confirmation d\'inscription',
+    text: `Bonjour ${userName}, bienvenue sur Océan. Votre code de vérification est : ${verificationCode}`,
+  };
+
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email envoyé : ' + info.response);
+    }
+  });
+}
+
 
 // Fonction, utilisant la formule de la haversine pour calculer la distance entre 
 // les coordonnées spécifiées (lat, lng) et les coordonnées de chaque prestataire récupéré.
@@ -152,6 +189,41 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   return distance;
 }
 
+router.get('/prestataires', (req, res, next) => {
+  User.find({})
+    .then((users) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(users);
+    })
+    .catch((err) => next(err));
+});
+
+// Route pour mettre à jour un prestataire ou (mise à jour de ces coordonnées géographiques)
+router.put('/prestataires/:prestataireId', (req, res, next) => {
+  User.findById(req.params.prestataireId) 
+    .then((user) => {
+      if(user != null) {
+        User.findByIdAndUpdate(req.params.prestataireId, { $set: req.body }, { new: true })
+        .then((user) => {
+          User.findById(user._id)
+          .then((user) => {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            // console.log(user);
+            res.json(user); 
+          });
+        })
+        .catch((err) => next(err));
+      }
+      else {
+        err = new Error('Prestataires ' + req.params.prestataireId + ' introuvable');
+        err.status = 404;
+        return next(err);            
+    }
+    })
+    .catch((err) => next(err));
+});
 
 // Route pour récupérer les prestataires par type, emplacement géospatial et 
 // la distance maximale de recherche en fonction du besoins clients
@@ -181,18 +253,23 @@ router.get('/prestataires/:type', async (req, res, next) => {
       }
     });
   
-    // Calculer la distance et arrondir à l'entier le plus proche pour chaque utilisateur trouvé
-    const usersWithDistance = users.map((user) => {
+    // Supposons que la vitesse moyenne est de 50 mètres par minute
+    const averageSpeedMetersPerMinute = 50;
+  
+    // Calculer la durée en minutes pour chaque utilisateur trouvé
+    const usersWithDistanceAndDuration = users.map((user) => {
       const userLat = user.location.coordinates[1]; // Latitude de l'utilisateur
       const userLng = user.location.coordinates[0]; // Longitude de l'utilisateur
       const userDistance = calculateDistance(lat, lng, userLat, userLng);
-      const roundedDistance = Math.round(userDistance); // Arrondir à l'entier le plus proche
-      return { ...user._doc, distance: roundedDistance };
+      const roundedDistance = Math.round(userDistance); // Distance arrondie en mètres
+      const durationMinutes = Math.round(roundedDistance / averageSpeedMetersPerMinute); // Durée en minutes
+      return { ...user._doc, distance: roundedDistance, duration: durationMinutes };
     });
+    // console.log(usersWithDistanceAndDuration);
   
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
-    res.json(usersWithDistance);
+    res.json(usersWithDistanceAndDuration);
   } catch (err) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
@@ -201,32 +278,31 @@ router.get('/prestataires/:type', async (req, res, next) => {
 });
 
 
-// ::::::: Gestion de l'envoie du mail
-async function sendConfirmationEmail(userEmail, userName, verificationToken) {
-  let transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'emailjosue256@gmail.com', // votre email
-      pass: 'usrgwuokswffsrek', // votre mot de passe
-    },
-  });
+// // ::::::: Gestion de l'envoie du mail
+// async function sendConfirmationEmail(userEmail, userName, verificationToken) {
+//   let transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//       user: 'emailjosue256@gmail.com', // votre email
+//       pass: 'usrgwuokswffsrek', // votre mot de passe
+//     },
+//   });
 
-  let mailOptions = {
-    from: 'emailjosue256@gmail.com',
-    to: userEmail,
-    subject: 'Confirmation d\'inscription',
-    text: `Bonjour ${userName}, bienvenue sur notre plateforme. Veuillez confirmer votre inscription en cliquant sur le lien suivant : http://192.168.0.61:3000/confirmation?token=${verificationToken}`,
-  };
+//   let mailOptions = {
+//     from: 'emailjosue256@gmail.com',
+//     to: userEmail,
+//     subject: 'Confirmation d\'inscription',
+//     text: `Bonjour ${userName}, bienvenue sur notre plateforme. Veuillez confirmer votre inscription en cliquant sur le lien suivant : http://192.168.0.61:3000/confirmation?token=${verificationToken}`,
+//   };
 
-  transporter.sendMail(mailOptions, function(error, info){
-    if (error) {
-      console.log(error);
-    } else {
-      console.log('Email envoyé : ' + info.response);
-    }
-  });
-}
-
+//   transporter.sendMail(mailOptions, function(error, info){
+//     if (error) {
+//       console.log(error);
+//     } else {
+//       console.log('Email envoyé : ' + info.response);
+//     }
+//   });
+// }
 
 
 router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, next) => {
@@ -247,6 +323,7 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
 
     console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
     if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
+    if (req.body.numero) user.numero = req.body.numero;
     if (req.body.email) user.email = req.body.email;
     if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
     if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
@@ -267,11 +344,11 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
 
     await user.save();
 
-    // Générez un token de vérification
-    const verificationToken = jwt.sign({ email: user.email }, '12345-67890-09876-54321', { expiresIn: '1d' });
+    // // Générez un token de vérification
+    // const verificationToken = jwt.sign({ email: user.email }, '12345-67890-09876-54321', { expiresIn: '1d' });
 
-    // Envoyer l'email de confirmation
-    await sendConfirmationEmail(user.email, user.username, verificationToken);
+    // // Envoyer l'email de confirmation
+    // await sendConfirmationEmail(user.email, user.username, verificationToken);
 
     passport.authenticate('local')(req, res, () => {
       res.statusCode = 200;
@@ -286,84 +363,98 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
   }
 });
 
-router.get('/confirmation', async (req, res, next) => {
-  console.log("Le lien de confirmation");
-  try {
-    const token = req.query.token;
 
-    const decoded = jwt.verify(token, '12345-67890-09876-54321');
+router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
+  const verificationCode = generateRandomCode();
 
-    const user = await User.findOne({ email: decoded.email });
-
-    if (!user) {
-      res.statusCode = 400;
-      res.setHeader('Content-Type', 'application/json');
-      res.json({ success: false, status: 'Le lien de confirmation est invalide.' });
-      return;
-    }
-
-    user.confirmed = true;
-    await user.save();
-
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.json({ success: true, status: 'Inscription confirmée !' });
-  } catch (err) {
-    console.error(err);
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json');
-    res.json({ success: false, status: 'Une erreur s\'est produite lors de la confirmation de l\'inscription.' });
-  }
-});
-
-
-router.post('/connexion', /*cors.corsWithOptions,*/ (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
+  passport.authenticate('local', async (err, user, info) => {
     if (err) return next(err);
 
     if (!user) {
+      // Envoyer une réponse d'échec si l'utilisateur n'est pas trouvé
       res.statusCode = 401;
       res.setHeader('Content-Type', 'application/json');
       const response = {
         success: false,
         status: 'Connexion échouée !',
         err: info,
-      }
+      };
       console.log(response);
       res.json(response);
       return;
     }
-    req.logIn(user, (err) => {
-      if (err) {
-        res.statusCode = 401;
-        res.setHeader('Content-Type', 'application/json');
-        res.json({
-          success: false,
-          status: 'Connexion échouée !',
-          err: "Impossible de connecter l'utilisateur !",
-        });
-        console.log(res.json({
-          success: false,
-          status: 'Connexion échouée !',
-          err: "Impossible de connecter l'utilisateur !",
-        }));
-        return;
+
+    try {
+      // const confirmation = await user.updateOne({ verificationCode: verificationCode }); 
+      // const user = await User.findOne({ username: username });
+      if(user.confirmation == false) {
+        await user.updateOne({ verificationCode: verificationCode }); // Mettez à jour le champ verificationCode
+        // Envoyer l'email de confirmation
+        sendConfirmationEmail(user.email, user.username, verificationCode);
       }
 
-      var token = authenticate.getToken({ _id: req.user._id });
+      var token = authenticate.getToken({ _id: user._id });
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
-      result = res.json({
+      const response = {
         success: true,
         status: 'Connexion réussie !',
         token: token,
         user: user,
-      });
-      // console.log(result);
-      console.log("Super************************");
-    });
+      };
+      console.log(response);
+      res.json(response);
+    } catch (error) {
+      // Gérer les erreurs ici, si la mise à jour échoue
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      const response = {
+        success: false,
+        status: 'Erreur lors de la mise à jour du code de vérification !',
+        err: error.message,
+      };
+      console.error(response);
+      res.json(response);
+    }
   })(req, res, next);
 });
+
+router.post('/verification', async (req, res, next) => {
+  const { username, verificationCode } = req.body;
+  console.log("aaaaaaaaaaaaaaaaaaaaaaa");
+  try {
+    // Recherchez l'utilisateur par son adresse e-mail
+    const user = await User.findOne({ username: username });
+
+    console.log("bbbbbbbbbbbbbbbbbbbbbbb");
+    if (!user) {
+      console.log("xxxxxxxxxxxxxxxxxxxxxxxx");
+      // Si l'utilisateur n'est pas trouvé, renvoyez une réponse d'échec
+      res.status(404).json({ success: false, message: "Utilisateur non trouvé." });
+      console.log("zzzzzzzzzzzzzzzzzzzzzzzz");
+      return;
+    }
+
+    console.log("ccccccccccccccccccccccccc");
+    if (user.verificationCode === verificationCode && !user.confirmation) {
+      console.log("ddddddddddddddddddddddddd");
+      // Si le code de vérification correspond et que l'utilisateur n'a pas encore été confirmé
+      user.confirmation = true;
+      await user.save();
+
+  
+      res.status(200).json({ success: true, message: "Validation du compte confirmée avec succès."});
+    } else {
+      // Si le code de vérification ne correspond pas ou que l'utilisateur est déjà confirmé
+      res.status(400).json({ success: false, message: "Code de vérification invalide ou utilisateur déjà confirmé." });
+    }
+  } catch (error) {
+    // Gérez les erreurs ici
+    console.error(error);
+    res.status(500).json({ success: false, message: "Une erreur s'est produite lors de la vérification de l'inscription." });
+  }
+});
+
 
 router.get('/logout', /*cors.cors,*/ (req, res, next) => {
   if (req.session) {
