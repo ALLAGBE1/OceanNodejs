@@ -247,6 +247,7 @@ router.get('/prestataires/:type', async (req, res, next) => {
     const users = await User.find({
       domaineactivite: type,
       prestataire: true,
+      disponible: true,
       location: { $ne: null },
       location: {
         $geoWithin: { $centerSphere: [[lng, lat], maxDistanceMeters / 6378100] }
@@ -270,6 +271,65 @@ router.get('/prestataires/:type', async (req, res, next) => {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.json(usersWithDistanceAndDuration);
+  } catch (err) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ success: false, message: err.message });
+  }
+});
+
+
+// Route pour récupérer les prestataires par nom de prestataire, emplacement géospatial et 
+// la distance maximale de recherche en fonction du besoins clients
+router.get('/prestatairesNom/:identite', async (req, res, next) => {
+  const { identite } = req.params;
+  // const { lat, lng, distanceMax } = req.query;
+
+  // Utilisation de 500 mètres par défaut si `distanceMax` n'est pas fourni ou n'est pas un nombre valide.
+  // const maxDistanceMeters = parseInt(distanceMax) || 5000;
+  const maxDistanceMeters = parseInt(distanceMax) || 5000;
+
+  try {
+    // Recherche géospatiale des prestataires du type spécifié
+    const users = await User.find({
+      username: identite,
+      prestataire: true,
+      disponible: true,
+      location: { $ne: null },
+      // location: {
+      //   $geoWithin: { $centerSphere: [[lng, lat], maxDistanceMeters / 6378100] }
+      // }
+    });
+    // console.log(usersWithDistanceAndDuration);
+  
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json(users);
+  } catch (err) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ success: false, message: err.message });
+  }
+});
+
+
+// jOSUé
+router.get('/prestatairesparchoix/', async (req, res, next) => {
+  try {
+    // Recherche géospatiale des prestataires du type spécifié
+    const users = await User.find({
+      domaineactivite: 'Garagiste',
+      prestataire: true,
+      disponible: true,
+      location: { $ne: null },
+      // location: {
+      //   $geoWithin: { $centerSphere: [[lng, lat], maxDistanceMeters / 6378100] }
+      // }
+    });
+  
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json(users);
   } catch (err) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
