@@ -12,6 +12,7 @@ var usersRouter = require('./routes/users');
 var domaineActivites = require('./routes/domaineActivite');
 var publiers = require('./routes/publier');
 var commentaireRouter = require('./routes/commentaireRouter');
+var photoProfilRouter = require('./routes/photoProfilRouter');
 var ratingRouter = require('./routes/ratingRouter');
 
 const cors = require('cors');
