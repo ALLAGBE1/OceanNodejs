@@ -12,7 +12,7 @@ var usersRouter = require('./routes/users');
 var domaineActivites = require('./routes/domaineActivite');
 var publiers = require('./routes/publier');
 var commentaireRouter = require('./routes/commentaireRouter');
-var photoProfilRouter = require('./routes/photoProfilRouter');
+var ratingRouter = require('./routes/ratingRouter');
 
 const cors = require('cors');
 
@@ -40,6 +40,8 @@ app.use('/domaineActivite', domaineActivites);
 app.use('/publier', publiers);
 app.use('/comments',commentaireRouter);
 app.use('/photoProfils',photoProfilRouter);
+app.use('/rating',ratingRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
