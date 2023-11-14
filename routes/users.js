@@ -281,9 +281,9 @@ router.get('/prestataires/:type', async (req, res, next) => {
 
 // Route pour récupérer les prestataires par nom de prestataire, emplacement géospatial et 
 // la distance maximale de recherche en fonction du besoins clients
-router.get('/prestatairesNom/:identite', async (req, res, next) => {
-  const { identite } = req.params;
-  // const { lat, lng, distanceMax } = req.query;
+router.get('/prestatairesNom/:searchTerm', async (req, res, next) => {
+  const { searchTerm } = req.params;
+  const { lat, lng, distanceMax } = req.query;
 
   // Utilisation de 500 mètres par défaut si `distanceMax` n'est pas fourni ou n'est pas un nombre valide.
   // const maxDistanceMeters = parseInt(distanceMax) || 5000;
@@ -292,13 +292,13 @@ router.get('/prestatairesNom/:identite', async (req, res, next) => {
   try {
     // Recherche géospatiale des prestataires du type spécifié
     const users = await User.find({
-      username: identite,
+      username: searchTerm,
       prestataire: true,
       disponible: true,
       location: { $ne: null },
-      // location: {
-      //   $geoWithin: { $centerSphere: [[lng, lat], maxDistanceMeters / 6378100] }
-      // }
+      location: {
+        $geoWithin: { $centerSphere: [[lng, lat], maxDistanceMeters / 6378100] }
+      }
     });
     // console.log(usersWithDistanceAndDuration);
   

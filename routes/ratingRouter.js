@@ -74,35 +74,58 @@ ratingRouter.route('/:commentId')
     res.statusCode = 403;
     res.end('POST operation not supported on /comments/'+ req.params.commentId);
 })
+// .put((req, res, next) => {
+//     Ratings.findById(req.params.commentId)
+//     .then((comment) => {
+//         if (comment != null) {
+//             if (!comment.author.equals(req.user._id)) {
+//                 var err = new Error('You are not authorized to update this comment!');
+//                 err.status = 403;
+//                 return next(err);
+//             }
+//             req.body.author = req.user._id;
+//             Ratings.findByIdAndUpdate(req.params.commentId, {
+//                 $set: req.body
+//             }, { new: true })
+//             .then((comment) => {
+//                 Ratings.findById(comment._id)
+//                 .populate('author')
+//                 .then((comment) => {
+//                     res.statusCode = 200;
+//                     res.setHeader('Content-Type', 'application/json');
+//                     res.json(comment); 
+//                 })               
+//             }, (err) => next(err));
+//         }
+//         else {
+//             err = new Error('Comment ' + req.params.commentId + ' not found');
+//             err.status = 404;
+//             return next(err);            
+//         }
+//     }, (err) => next(err))
+//     .catch((err) => next(err));
+// })
 .put((req, res, next) => {
     Ratings.findById(req.params.commentId)
-    .then((comment) => {
-        if (comment != null) {
-            if (!comment.author.equals(req.user._id)) {
-                var err = new Error('You are not authorized to update this comment!');
-                err.status = 403;
-                return next(err);
-            }
-            req.body.author = req.user._id;
-            Ratings.findByIdAndUpdate(req.params.commentId, {
-                $set: req.body
-            }, { new: true })
-            .then((comment) => {
-                Ratings.findById(comment._id)
-                .populate('author')
-                .then((comment) => {
+    .then((publicite) => {
+        if (publicite != null) {
+            Ratings.findByIdAndUpdate(req.params.commentId, { $set: req.body }, { new: true })
+            .then((publicite) => {
+                Ratings.findById(publicite._id)
+                .then((publicite) => {
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
-                    res.json(comment); 
-                })               
-            }, (err) => next(err));
+                    res.json(publicite); 
+                });               
+            })
+            .catch((err) => next(err));
         }
         else {
-            err = new Error('Comment ' + req.params.commentId + ' not found');
+            err = new Error('Publicite ' + req.params.commentId + ' introuvable');
             err.status = 404;
             return next(err);            
         }
-    }, (err) => next(err))
+    })
     .catch((err) => next(err));
 })
 .delete((req, res, next) => {
@@ -133,7 +156,8 @@ ratingRouter.route('/:commentId')
 
 ratingRouter.route('/ratings/:ratingId')
 .get((req, res, next) => {
-    Ratings.find({ prestataire: req.params.ratingId })
+    const { author } = req.query;
+    Ratings.find({ prestataire: req.params.ratingId, author })
     .populate('author')
     .then((produits) => {
         res.statusCode = 200;
