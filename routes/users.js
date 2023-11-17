@@ -437,7 +437,8 @@ router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
       const response = {
         success: false,
         status: 'Connexion échouée !',
-        err: info,
+        err: info.message,
+        // err: info,
       };
       console.log(response);
       res.json(response);
