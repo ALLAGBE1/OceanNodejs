@@ -301,10 +301,24 @@ router.get('/prestatairesNom/:searchTerm', async (req, res, next) => {
       }
     });
     // console.log(usersWithDistanceAndDuration);
+
+    // Supposons que la vitesse moyenne est de 50 mètres par minute
+    const averageSpeedMetersPerMinute = 50;
+  
+    // Calculer la durée en minutes pour chaque utilisateur trouvé
+    const usersWithDistanceAndDuration = users.map((user) => {
+      const userLat = user.location.coordinates[1]; // Latitude de l'utilisateur
+      const userLng = user.location.coordinates[0]; // Longitude de l'utilisateur
+      const userDistance = calculateDistance(lat, lng, userLat, userLng);
+      const roundedDistance = Math.round(userDistance); // Distance arrondie en mètres
+      const durationMinutes = Math.round(roundedDistance / averageSpeedMetersPerMinute); // Durée en minutes
+      return { ...user._doc, distance: roundedDistance, duration: durationMinutes };
+    });
+    // console.log(usersWithDistanceAndDuration);
   
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
-    res.json(users);
+    res.json(usersWithDistanceAndDuration);
   } catch (err) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
