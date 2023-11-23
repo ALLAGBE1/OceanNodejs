@@ -419,7 +419,7 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
     console.error(err);
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
-    res.json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.' });
+    res.json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.', err: err.message, });
   }
 });
 
