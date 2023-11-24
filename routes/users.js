@@ -279,7 +279,7 @@ router.get('/prestataires/:type', async (req, res, next) => {
 });
 
 
-// Route pour récupérer les prestataires par nom de prestataire, emplacement géospatial et 
+// Route pour chercher les prestataires par nom de prestataire, emplacement géospatial et 
 // la distance maximale de recherche en fonction du besoins clients
 router.get('/prestatairesNom/:searchTerm', async (req, res, next) => {
   const { searchTerm } = req.params;
@@ -529,6 +529,30 @@ router.post('/verification', async (req, res, next) => {
     res.status(500).json({ success: false, message: "Une erreur s'est produite lors de la vérification de l'inscription." });
   }
 });
+
+router.put('/update/:userId', (req, res, next) => {
+  User.findById(req.params.userId)
+  .then((publicite) => {
+      if (publicite != null) {
+          User.findByIdAndUpdate(req.params.userId, { $set: req.body }, { new: true })
+          .then((publicite) => {
+              User.findById(publicite._id)
+              .then((publicite) => {
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.json(publicite); 
+              });               
+          })
+          .catch((err) => next(err));
+      }
+      else {
+          err = new Error('Publicite ' + req.params.userId + ' introuvable');
+          err.status = 404;
+          return next(err);            
+      }
+  })
+  .catch((err) => next(err));
+})
 
 
 router.get('/logout', /*cors.cors,*/ (req, res, next) => {
