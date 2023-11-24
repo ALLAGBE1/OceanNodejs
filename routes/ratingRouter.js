@@ -168,4 +168,50 @@ ratingRouter.route('/ratings/:ratingId')
 });
 
 
+ratingRouter.route('/ratings/allusers/:ratingId')
+.get((req, res, next) => {
+ Ratings.find({ prestataire: req.params.ratingId})
+ .populate('author')
+ .populate('prestataire')
+ .then((produits) => {
+     let ratings = produits.map(product => Number(product.rating));
+     let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+     let average = sum / ratings.length;
+     let prestataire = produits[0].prestataire; // Get the prestataire from the first product
+     res.statusCode = 200;
+     res.setHeader('Content-Type', 'application/json');
+     res.json({average: average, prestataire: prestataire});
+ })
+ .catch((err) => next(err));
+});
+
+
+// ratingRouter.route('/ratings/allusers/:ratingId')
+// .get((req, res, next) => {
+//   Ratings.find({ prestataire: req.params.ratingId})
+//   .populate('author')
+//   .then((produits) => {
+//       let ratings = produits.map(product => Number(product.rating));
+//       let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json({sum: sum});
+//   })
+//   .catch((err) => next(err));
+// });
+
+
+
+// ratingRouter.route('/ratings/allusers/:ratingId')
+// .get((req, res, next) => {
+//     Ratings.find({ prestataire: req.params.ratingId})
+//     .populate('author')
+//     .then((produits) => {
+//         res.statusCode = 200;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json(produits);
+//     })
+//     .catch((err) => next(err));
+// });
+
 module.exports = ratingRouter;
