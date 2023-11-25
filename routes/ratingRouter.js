@@ -22,6 +22,127 @@ ratingRouter.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
+
+ratingRouter.route('/ratings/superieur/egale/quatre')
+.get((req,res,next) => {
+  Ratings.aggregate([
+      {
+          $group: {
+              _id: "$prestataire",
+              averageRating: { $avg: { $toInt: "$rating" } },
+              count: { $sum: 1 }
+          }
+      },
+      {
+          $lookup: {
+              from: "users", // nom de la collection du prestataire
+              localField: "_id",
+              foreignField: "_id",
+              as: "prestataire_info"
+          }
+      },
+      { $unwind: "$prestataire_info" },
+      {
+          $match: {
+              averageRating: { $gte: 4 }
+          }
+      },
+      {
+          $sort: {
+              averageRating: -1
+          }
+      }
+  ])
+  .then((ratings) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(ratings);
+  }, (err) => next(err))
+  .catch((err) => next(err));
+})
+
+
+// ratingRouter.route('/ratings/all')
+// .get((req,res,next) => {
+//    Ratings.aggregate([
+//        {
+//            $group: {
+//                _id: "$prestataire",
+//                averageRating: { $avg: { $toInt: "$rating" } },
+//                count: { $sum: 1 }
+//            }
+//        },
+//        {
+//            $lookup: {
+//                from: "users", // nom de la collection du prestataire
+//                localField: "_id",
+//                foreignField: "_id",
+//                as: "prestataire_info"
+//            }
+//        },
+//        { $unwind: "$prestataire_info" },
+//        {
+//            $match: {
+//                averageRating: { $gte: 4 }
+//            }
+//        }
+//    ])
+//    .then((ratings) => {
+//        res.statusCode = 200;
+//        res.setHeader('Content-Type', 'application/json');
+//        res.json(ratings);
+//    }, (err) => next(err))
+//    .catch((err) => next(err));
+// })
+
+
+// ratingRouter.route('/ratings/all')
+// .get((req,res,next) => {
+//     Ratings.aggregate([
+//         {
+//             $group: {
+//                 _id: "$prestataire",
+//                 averageRating: { $avg: { $toInt: "$rating" } },
+//                 count: { $sum: 1 }
+//             }
+//         },
+//         {
+//             $lookup: {
+//                 from: "users", // nom de la collection du prestataire
+//                 localField: "_id",
+//                 foreignField: "_id",
+//                 as: "prestataire_info"
+//             }
+//         },
+//         { $unwind: "$prestataire_info" }
+//     ])
+//     .then((ratings) => {
+//         res.statusCode = 200;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json(ratings);
+//     }, (err) => next(err))
+//     .catch((err) => next(err));
+// })
+
+// ratingRouter.route('/ratings/all')
+// .get((req,res,next) => {
+//    Ratings.aggregate([
+//        {
+//            $group: {
+//                _id: "$prestataire",
+//                totalRating: { $sum: "$rating" },
+//                count: { $sum: 1 }
+//            }
+//        }
+//    ])
+//    .then((ratings) => {
+//        res.statusCode = 200;
+//        res.setHeader('Content-Type', 'application/json');
+//        res.json(ratings);
+//    }, (err) => next(err))
+//    .catch((err) => next(err));
+// })
+
 .post(cors.corsWithOptions, (req, res, next) => {
     if (req.body != null) {
         // req.body.author = req.user._id;
@@ -185,22 +306,24 @@ ratingRouter.route('/ratings/allusers/:ratingId')
  .catch((err) => next(err));
 });
 
-
-// ratingRouter.route('/ratings/allusers/:ratingId')
-// .get((req, res, next) => {
-//   Ratings.find({ prestataire: req.params.ratingId})
-//   .populate('author')
-//   .then((produits) => {
-//       let ratings = produits.map(product => Number(product.rating));
-//       let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-//       res.statusCode = 200;
-//       res.setHeader('Content-Type', 'application/json');
-//       res.json({sum: sum});
-//   })
-//   .catch((err) => next(err));
-// });
-
-
+// ratingRouter.route('/ratings/all')
+// .get((req,res,next) => {
+//  Ratings.aggregate([
+//      {
+//          $group: {
+//              _id: "$prestataire",
+//              averageRating: { $avg: { $toInt: "$rating" } },
+//              count: { $sum: 1 }
+//          }
+//      }
+//  ])
+//  .then((ratings) => {
+//      res.statusCode = 200;
+//      res.setHeader('Content-Type', 'application/json');
+//      res.json(ratings);
+//  }, (err) => next(err))
+//  .catch((err) => next(err));
+// })
 
 // ratingRouter.route('/ratings/allusers/:ratingId')
 // .get((req, res, next) => {
