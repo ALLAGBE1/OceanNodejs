@@ -54,7 +54,7 @@ router.get('/', (req, res, next) => {
     .catch((err) => next(err));
 });
 
-router.get('/partenaires', (req, res, next) => {
+router.get('/partenaires', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
   User.find({documentfournirId: {$ne: ''}})  // Cette requête trouve tous les utilisateurs où documentfournirId n'est pas une chaîne vide.
     .then((users) => {
       // Transformez chaque utilisateur pour ajouter une URL de téléchargement
