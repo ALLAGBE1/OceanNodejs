@@ -132,7 +132,7 @@ commentRouter.route('/:commentId')
 });
 
 commentRouter.route('/commentaires/:commentaireId')
-.get((req, res, next) => {
+.get(authenticate.verifyUser, (req, res, next) => {
     Comments.find({ prestataire: req.params.commentaireId })
     .populate('author')
     .then((produits) => {

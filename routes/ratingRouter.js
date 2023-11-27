@@ -325,7 +325,7 @@ ratingRouter.route('/:commentId')
 });
 
 ratingRouter.route('/ratings/:ratingId')
-.get((req, res, next) => {
+.get(authenticate.verifyUser, (req, res, next) => {
     const { author } = req.query;
     Ratings.find({ prestataire: req.params.ratingId, author })
     .populate('author')
@@ -339,7 +339,7 @@ ratingRouter.route('/ratings/:ratingId')
 
 
 ratingRouter.route('/ratings/allusers/:ratingId')
-.get((req, res, next) => {
+.get(authenticate.verifyUser, (req, res, next) => {
  Ratings.find({ prestataire: req.params.ratingId})
  .populate('author')
  .populate('prestataire')
