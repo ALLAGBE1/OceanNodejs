@@ -68,7 +68,9 @@ publiers.route('/')
   // Le fichier sera stocké dans req.file grâce à multer
 
   // Construisez l'URL complète de l'image créée
-  const imageUrl = `${req.protocol}://${req.get('host')}/publier/${req.file.originalname}`;
+  // const imageUrl = `${req.protocol}://${req.get('host')}/publier/${req.file.originalname}`;
+  const imageUrl = `https://ocean-52xt.onrender.com/publier/${req.file.originalname}`;
+
 
   // Créez la publicité avec l'URL complète de l'image
   Publiers.create({ imagepublier: imageUrl })

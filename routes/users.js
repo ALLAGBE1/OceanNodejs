@@ -43,6 +43,26 @@ const upload = multer({ storage: storage, fileFilter: imageFileFilter });
 
 // ::::::::::::::::::::::
 
+const storage1 = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/profile'); // Définit le répertoire de stockage
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname); // Définit le nom du fichier
+  }
+});
+
+const imageFileFilter1 = (req, file, cb) => {
+  if(!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+      return cb(new Error('Vous ne pouvez télécharger que des fichiers pdf !'), false);
+  }
+  cb(null, true);
+};
+
+const upload1 = multer({ storage: storage1, fileFilter: imageFileFilter1 });
+
+//////////////////////////////////////
+
 /* GET users listing. */
 router.get('/', (req, res, next) => {
   User.find({})
@@ -530,7 +550,10 @@ router.post('/verification', async (req, res, next) => {
   }
 });
 
-router.put('/update/:userId', (req, res, next) => {
+router.put('/update/:userId', upload1.single('photoProfil'), (req, res, next) => {
+  // const imageUrl = `${req.protocol}://${req.get('host')}/users/${req.file.originalname}`;
+  const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+
   User.findById(req.params.userId)
   .then((publicite) => {
       if (publicite != null) {

@@ -47,10 +47,6 @@ var User = new Schema({
       type: String,
       default: 'https://cdn.pixabay.com/photo/2021/07/02/04/48/user-6380868_1280.png'
     },
-    // rating: {
-    //   type: Number,
-    //   default: 0
-    // },
     confirmation:   {
       type: Boolean,
       default: false
