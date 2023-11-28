@@ -66,10 +66,25 @@ const upload1 = multer({ storage: storage1, fileFilter: imageFileFilter1 });
 /* GET users listing. */
 router.get('/', (req, res, next) => {
   User.find({})
-    .then((users) => {
+    // .then((users) => {
+    //   res.statusCode = 200;
+    //   res.setHeader('Content-Type', 'application/json');
+    //   res.json(users);
+    // })
+    // .catch((err) => next(err));
+
+    .then((publicites) => {
+      const transformedPublicites = publicites.map(publicite => {
+        publicite = publicite.toObject();
+
+        let imageName = publicite.imageProfil;
+        publicite.afficheUrl = `${imageName}`;
+        return publicite;
+      })
+
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
-      res.json(users);
+      res.json(transformedPublicites); // Utilisez les données transformées
     })
     .catch((err) => next(err));
 });
@@ -514,6 +529,18 @@ router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
   })(req, res, next);
 });
 
+router.get('/images/:imageName', (req, res, next) => {
+  const imageName = req.params.imageName;
+  const imagePath = path.join(__dirname, 'public/profile', imageName);
+
+  // Vérifiez que le fichier image existe
+  if (fs.existsSync(imagePath)) {
+    res.sendFile(imagePath);
+  } else {
+    res.status(404).send('Image not found');
+  }
+})
+
 router.post('/verification', async (req, res, next) => {
   const { username, verificationCode } = req.body;
   console.log("aaaaaaaaaaaaaaaaaaaaaaa");
@@ -550,9 +577,9 @@ router.post('/verification', async (req, res, next) => {
   }
 });
 
-router.put('/update/:userId', upload1.single('photoProfil'), (req, res, next) => {
+router.put('/update/:userId', (req, res, next) => {
   // const imageUrl = `${req.protocol}://${req.get('host')}/users/${req.file.originalname}`;
-  const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+  // const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
 
   User.findById(req.params.userId)
   .then((publicite) => {
@@ -577,6 +604,33 @@ router.put('/update/:userId', upload1.single('photoProfil'), (req, res, next) =>
   })
   .catch((err) => next(err));
 })
+
+
+router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, res, next) => {
+  const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+
+  User.findById(req.params.userId)
+    .then((user) => {
+      if (user != null) {
+        // Mettez à jour le champ `photoProfil` avec le nouveau chemin de l'image
+        user.photoProfil = imageUrl;
+
+        user.save()
+          .then((updatedUser) => {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.json(updatedUser);
+          })
+          .catch((err) => next(err));
+      } else {
+        const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
+        err.status = 404;
+        console.log('Error:', err.message);
+        return next(err);
+      }
+    })
+    .catch((err) => next(err));
+});
 
 
 router.get('/logout', /*cors.cors,*/ (req, res, next) => {
