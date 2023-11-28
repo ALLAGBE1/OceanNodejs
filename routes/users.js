@@ -571,6 +571,7 @@ router.put('/update/:userId', upload1.single('photoProfil'), (req, res, next) =>
       else {
           err = new Error('Publicite ' + req.params.userId + ' introuvable');
           err.status = 404;
+          console.log('Error:', err.message);
           return next(err);            
       }
   })
