@@ -89,6 +89,50 @@ router.get('/', (req, res, next) => {
     .catch((err) => next(err));
 });
 
+router.get('/images/:imageName', (req, res, next) => {
+  const imageName = req.params.imageName;
+  const imagePath = path.join(__dirname, 'public/users', imageName);
+
+  // Vérifiez que le fichier image existe
+  if (fs.existsSync(imagePath)) {
+    res.sendFile(imagePath);
+  } else {
+    res.status(404).send('Image not found');
+  }
+});
+
+// router.route('/')
+//   .get((req, res, next) => {
+//     User.find(req.query)
+//       .then((publicites) => {
+//         const transformedPublicites = publicites.map(publicite => {
+//           publicite = publicite.toObject();
+
+//           let imageName = publicite.photoProfil;
+//           publicite.afficheUrl = `${imageName}`;
+//           return publicite;
+//         })
+
+//         res.statusCode = 200;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json(transformedPublicites); // Utilisez les données transformées
+//       })
+//       .catch((err) => next(err));
+//   });
+
+// router.get('/images/:imageName', (req, res, next) => {
+//   const imageName = req.params.imageName;
+//   const imagePath = path.join(__dirname, 'public/users', imageName);
+
+//   // Vérifiez que le fichier image existe
+//   if (fs.existsSync(imagePath)) {
+//     res.sendFile(imagePath);
+//   } else {
+//     res.status(404).send('Image not found');
+//   }
+// })
+
+
 router.get('/partenaires', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
   User.find({documentfournirId: {$ne: ''}})  // Cette requête trouve tous les utilisateurs où documentfournirId n'est pas une chaîne vide.
     .then((users) => {
@@ -529,17 +573,17 @@ router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
   })(req, res, next);
 });
 
-router.get('/images/:imageName', (req, res, next) => {
-  const imageName = req.params.imageName;
-  const imagePath = path.join(__dirname, 'public/profile', imageName);
+// router.get('/images/:imageName', (req, res, next) => {
+//   const imageName = req.params.imageName;
+//   const imagePath = path.join(__dirname, 'public/profile', imageName);
 
-  // Vérifiez que le fichier image existe
-  if (fs.existsSync(imagePath)) {
-    res.sendFile(imagePath);
-  } else {
-    res.status(404).send('Image not found');
-  }
-})
+//   // Vérifiez que le fichier image existe
+//   if (fs.existsSync(imagePath)) {
+//     res.sendFile(imagePath);
+//   } else {
+//     res.status(404).send('Image not found');
+//   }
+// })
 
 router.post('/verification', async (req, res, next) => {
   const { username, verificationCode } = req.body;
