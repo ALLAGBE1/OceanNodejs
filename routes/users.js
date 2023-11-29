@@ -362,11 +362,11 @@ router.get('/prestataires/:type', async (req, res, next) => {
 // la distance maximale de recherche en fonction du besoins clients
 router.get('/prestatairesNom/:searchTerm', async (req, res, next) => {
   const { searchTerm } = req.params;
-  const { lat, lng, distanceMax } = req.query;
+  // const { lat, lng, distanceMax } = req.query;
 
   // Utilisation de 500 mètres par défaut si `distanceMax` n'est pas fourni ou n'est pas un nombre valide.
   // const maxDistanceMeters = parseInt(distanceMax) || 5000;
-  const maxDistanceMeters = parseInt(distanceMax) || 5000;
+  // const maxDistanceMeters = parseInt(distanceMax) || 5000;
 
   try {
     // Recherche géospatiale des prestataires du type spécifié
@@ -374,30 +374,31 @@ router.get('/prestatairesNom/:searchTerm', async (req, res, next) => {
       username: searchTerm,
       prestataire: true,
       disponible: true,
-      location: { $ne: null },
-      location: {
-        $geoWithin: { $centerSphere: [[lng, lat], maxDistanceMeters / 6378100] }
-      }
+      // location: { $ne: null },
+      // location: {
+      //   $geoWithin: { $centerSphere: [[lng, lat], maxDistanceMeters / 6378100] }
+      // }
     });
     // console.log(usersWithDistanceAndDuration);
 
     // Supposons que la vitesse moyenne est de 50 mètres par minute
-    const averageSpeedMetersPerMinute = 50;
+    // const averageSpeedMetersPerMinute = 50;
   
-    // Calculer la durée en minutes pour chaque utilisateur trouvé
-    const usersWithDistanceAndDuration = users.map((user) => {
-      const userLat = user.location.coordinates[1]; // Latitude de l'utilisateur
-      const userLng = user.location.coordinates[0]; // Longitude de l'utilisateur
-      const userDistance = calculateDistance(lat, lng, userLat, userLng);
-      const roundedDistance = Math.round(userDistance); // Distance arrondie en mètres
-      const durationMinutes = Math.round(roundedDistance / averageSpeedMetersPerMinute); // Durée en minutes
-      return { ...user._doc, distance: roundedDistance, duration: durationMinutes };
-    });
+    // // Calculer la durée en minutes pour chaque utilisateur trouvé
+    // const usersWithDistanceAndDuration = users.map((user) => {
+    //   const userLat = user.location.coordinates[1]; // Latitude de l'utilisateur
+    //   const userLng = user.location.coordinates[0]; // Longitude de l'utilisateur
+    //   const userDistance = calculateDistance(lat, lng, userLat, userLng);
+    //   const roundedDistance = Math.round(userDistance); // Distance arrondie en mètres
+    //   const durationMinutes = Math.round(roundedDistance / averageSpeedMetersPerMinute); // Durée en minutes
+    //   return { ...user._doc, distance: roundedDistance, duration: durationMinutes };
+    // });
     // console.log(usersWithDistanceAndDuration);
   
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
-    res.json(usersWithDistanceAndDuration);
+    res.json(users);
+    // res.json(usersWithDistanceAndDuration);
   } catch (err) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
