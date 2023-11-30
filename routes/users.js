@@ -674,7 +674,7 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, r
         return next(err);
       }
     })
-    .catch((err) => next(err));
+    .catch((err) => next(err), console.log('Error:', err.message));
 });
 
 
