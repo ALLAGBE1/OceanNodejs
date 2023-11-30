@@ -45,7 +45,7 @@ const upload = multer({ storage: storage, fileFilter: imageFileFilter });
 
 const storage1 = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/profile'); // Définit le répertoire de stockage
+    cb(null, 'public/users'); // Définit le répertoire de stockage
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname); // Définit le nom du fichier
@@ -648,8 +648,7 @@ router.put('/update/:userId', (req, res, next) => {
       }
   })
   .catch((err) => next(err));
-})
-
+});
 
 router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, res, next) => {
   const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
@@ -657,7 +656,6 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, r
   User.findById(req.params.userId)
     .then((user) => {
       if (user != null) {
-        // Mettez à jour le champ `photoProfil` avec le nouveau chemin de l'image
         user.photoProfil = imageUrl;
 
         user.save()
@@ -666,16 +664,50 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, r
             res.setHeader('Content-Type', 'application/json');
             res.json(updatedUser);
           })
-          .catch((err) => next(err));
+          .catch((err) => {
+            console.error('Error saving user:', err);
+            next(err);
+          });
       } else {
         const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
         err.status = 404;
-        console.log('Error:', err.message);
+        console.error('Error:', err.message);
         return next(err);
       }
     })
-    .catch((err) => next(err), console.log('Error:', err.message));
+    .catch((err) => {
+      console.error('Error finding user:', err);
+      next(err);
+    });
 });
+
+
+
+// router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, res, next) => {
+//   const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+
+//   User.findById(req.params.userId)
+//     .then((user) => {
+//       if (user != null) {
+//         // Mettez à jour le champ `photoProfil` avec le nouveau chemin de l'image
+//         user.photoProfil = imageUrl;
+
+//         user.save()
+//           .then((updatedUser) => {
+//             res.statusCode = 200;
+//             res.setHeader('Content-Type', 'application/json');
+//             res.json(updatedUser);
+//           })
+//           .catch((err) => next(err));
+//       } else {
+//         const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
+//         err.status = 404;
+//         console.log('Error:', err.message);
+//         return next(err);
+//       }
+//     })
+//     .catch((err) => next(err), console.log('Error:', err.message));
+// });
 
 
 router.get('/logout', /*cors.cors,*/ (req, res, next) => {

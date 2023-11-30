@@ -17,6 +17,16 @@ var ratingRouter = require('./routes/ratingRouter');
 
 const cors = require('cors');
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1); // exit application on uncaught exception
+});
+
+
 
 var app = express();
 
@@ -56,8 +66,16 @@ app.use(function(err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   // render the error page
-  res.status(err.status || 500);
+  // res.status(err.status || 500);
+  console.error(err.stack);
+  res.status(err.status || 500).json({ error: err.message });
   res.render('error');
 });
+
+// app.use((err, req, res, next) => {
+//   console.error(err.stack);
+//   res.status(err.status || 500).json({ error: err.message });
+// });
+
 
 module.exports = app;
