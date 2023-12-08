@@ -12,7 +12,9 @@ var User = new Schema({
     },
     email: {
       type: String,
-        default: ''
+        // default: ''
+      unique: true, 
+      required: true 
     },
     numero: {
       type: Number,
@@ -70,6 +72,10 @@ var User = new Schema({
         index: '2dsphere'
       }
     },
+    codeVerify: {
+      type: String,
+        default: ''
+    }
 }, {
     timestamps: true
 });
