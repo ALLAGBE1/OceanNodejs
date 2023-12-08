@@ -703,6 +703,31 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, r
 //     .catch((err) => next(err), console.log('Error:', err.message));
 // });
 
+async function sendResetPasswordEmail(userEmail, userName, verificationCode) {
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'emailjosue256@gmail.com', 
+      pass: 'usrgwuokswffsrek', 
+    },
+  });
+
+  let mailOptions = {
+    from: 'emailjosue256@gmail.com',
+    to: userEmail,
+    subject: 'Réinitialisation du mot de passe',
+    text: `Bonjour ${userName}, vous avez demandé la réinitialisation de votre mot de passe. Votre code de vérification est : ${verificationCode}`,
+  };
+
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email de réinitialisation envoyé : ' + info.response);
+    }
+  });
+}
+
 
 router.post('/forgot-password', async (req, res, next) => {
   try {
