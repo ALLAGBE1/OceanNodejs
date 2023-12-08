@@ -310,7 +310,7 @@ router.get('/prestataires/:type', async (req, res, next) => {
   const { type } = req.params;
   const { lat, lng, distanceMax } = req.query;
 
-  if (!['Électricien', 'Garagiste', 'Plombier', 'Mécanicien'].includes(type)) {
+  if (!['Électricien', 'Garagiste', 'Plombier', 'Mécanicien', 'Menuiserie', 'Jardinage', 'Réparation électronique', 'Entretien de piscines', 'Déménagement', 'Informatique', 'Serrurerie', 'Froid et Climatisation', 'Carrelage', 'Téléphone et ordinateur', 'Free-lance', 'Livreur', 'Autres'].includes(type)) {
     // Gérer le cas où le type n'est pas valide
     res.statusCode = 400;
     res.setHeader('Content-Type', 'application/json');
