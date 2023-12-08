@@ -498,12 +498,6 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
 
     await user.save();
 
-    // // Générez un token de vérification
-    // const verificationToken = jwt.sign({ email: user.email }, '12345-67890-09876-54321', { expiresIn: '1d' });
-
-    // // Envoyer l'email de confirmation
-    // await sendConfirmationEmail(user.email, user.username, verificationToken);
-
     passport.authenticate('local')(req, res, () => {
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
@@ -708,6 +702,74 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, r
 //     })
 //     .catch((err) => next(err), console.log('Error:', err.message));
 // });
+
+
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const email = req.body.email;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error('L\'adresse e-mail n\'existe pas.');
+    }
+
+    const verificationCode = generateRandomCode();
+    // codeVerify
+    // await user.setPassword(verificationCode);
+    await user.updateOne({ codeVerify: verificationCode });
+
+    await sendResetPasswordEmail(user.email, user.name, verificationCode);
+    
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ success: true, status: 'Email de réinitialisation envoyé.' });
+  } catch (err) {
+    console.error(err);
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ success: false, status: 'Une erreur s\'est produite.' });
+  }
+});
+
+
+router.put('/update/password/:userId', async (req, res, next) => {
+  const { codeVerify, newpassword } = req.body;
+  console.log("azertyu", codeVerify);
+  console.log("pass", newpassword);
+  try {
+   const user = await User.findById(req.params.userId);
+   if (user != null) {
+     console.log("11111111111111", codeVerify);
+     console.log("userrrrrrrrrrrrrrr", user);
+     if(codeVerify == user.codeVerify) {
+       console.log("2222222222222222222", codeVerify);
+       user.setPassword(newpassword, async function(err) {
+         if (err) {
+           return next(err);
+         }
+         await user.save();
+         res.statusCode = 200;
+         res.setHeader('Content-Type', 'application/json');
+         res.json(user);
+       });
+     } else {
+       err = new Error('Code de vérification incorrect. Veuillez insérer le bon.');
+       err.status = 404;
+       console.log('Error:', err.message);
+       return next(err); 
+     } 
+   }
+   else {
+       err = new Error('User ' + req.params.userId + ' introuvable');
+       err.status = 404;
+       console.log('Error:', err.message);
+       return next(err);          
+   }
+  } catch (err) {
+   next(err);
+  }
+ });
 
 
 router.get('/logout', /*cors.cors,*/ (req, res, next) => {
