@@ -74,7 +74,8 @@ var User = new Schema({
     },
     codeVerify: {
       type: String,
-        default: ''
+        default: '',
+        unique: true, 
     }
 }, {
     timestamps: true

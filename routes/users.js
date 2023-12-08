@@ -758,43 +758,115 @@ router.post('/forgot-password', async (req, res, next) => {
 });
 
 
-router.put('/update/password/:userId', async (req, res, next) => {
-  const { codeVerify, newpassword } = req.body;
-  console.log("azertyu", codeVerify);
-  console.log("pass", newpassword);
+
+router.post('/update/password', async (req, res, next) => {
   try {
-   const user = await User.findById(req.params.userId);
-   if (user != null) {
-     console.log("11111111111111", codeVerify);
-     console.log("userrrrrrrrrrrrrrr", user);
-     if(codeVerify == user.codeVerify) {
-       console.log("2222222222222222222", codeVerify);
-       user.setPassword(newpassword, async function(err) {
-         if (err) {
-           return next(err);
-         }
-         await user.save();
-         res.statusCode = 200;
-         res.setHeader('Content-Type', 'application/json');
-         res.json(user);
-       });
-     } else {
-       err = new Error('Code de vérification incorrect. Veuillez insérer le bon.');
-       err.status = 404;
-       console.log('Error:', err.message);
-       return next(err); 
-     } 
-   }
-   else {
-       err = new Error('User ' + req.params.userId + ' introuvable');
-       err.status = 404;
-       console.log('Error:', err.message);
-       return next(err);          
-   }
+    const { codeVerify, newpassword } = req.body;
+
+    // Trouver l'utilisateur par codeVerify
+    const user = await User.findOne({ codeVerify });
+
+    // Vérifier si l'utilisateur existe
+    if (!user) {
+      const err = new Error('Code de vérification incorrect. Veuillez insérer le bon.');
+      err.status = 404;
+      console.error('Error:', err.message);
+      return next(err);
+    }
+
+    // Mettre à jour le mot de passe de l'utilisateur
+    user.setPassword(newpassword, async (err) => {
+      if (err) {
+        return next(err);
+      }
+
+      // Enregistrer l'utilisateur mis à jour
+      await user.save();
+
+      res.status(200).json(user);
+    });
   } catch (err) {
-   next(err);
+    next(err);
   }
- });
+});
+
+
+// router.put('/update/password', async (req, res, next) => {
+//  const { codeVerify, newpassword } = req.body;
+//  console.log("azertyu", codeVerify);
+//  console.log("password", newpassword);
+//  try {
+//   const user = await User.findOne({ codeVerify: codeVerify });
+//   if (user != null) {
+//     console.log("11111111111111", codeVerify);
+//     console.log("userrrrrrrrrrrrrrr", user);
+//     if(codeVerify == user.codeVerify) {
+//       console.log("222222222222222222", codeVerify);
+//       user.setPassword(newpassword, async function(err) {
+//         if (err) {
+//           return next(err);
+//         }
+//         await user.save();
+//         res.statusCode = 200;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json(user);
+//       });
+//     } else {
+//       err = new Error('Code de vérification incorrect. Veuillez insérer le bon.');
+//       err.status = 404;
+//       console.log('Error:', err.message);
+//       return next(err); 
+//     } 
+//   }
+//   else {
+//       err = new Error('User ' + codeVerify + ' introuvable');
+//       err.status = 404;
+//       console.log('Error:', err.message);
+//       return next(err);        
+//   }
+//  } catch (err) {
+//   next(err);
+//  }
+// });
+
+
+// router.put('/update/password/:userId', async (req, res, next) => {
+//   const { codeVerify, newpassword } = req.body;
+//   console.log("azertyu", codeVerify);
+//   console.log("password", newpassword);
+//   try {
+//    const user = await User.findById(req.params.userId);
+//    if (user != null) {
+//      console.log("11111111111111", codeVerify);
+//      console.log("userrrrrrrrrrrrrrr", user);
+//      if(codeVerify == user.codeVerify) {
+//        console.log("2222222222222222222", codeVerify);
+//        user.setPassword(newpassword, async function(err) {
+//          if (err) {
+//            return next(err);
+//          }
+//          await user.save();
+//          res.statusCode = 200;
+//          res.setHeader('Content-Type', 'application/json');
+//          res.json(user);
+//        });
+//      } else {
+//        err = new Error('Code de vérification incorrect. Veuillez insérer le bon.');
+//        err.status = 404;
+//        console.log('Error:', err.message);
+//        return next(err); 
+//      } 
+//    }
+//    else {
+//        err = new Error('User ' + req.params.userId + ' introuvable');
+//        err.status = 404;
+//        console.log('Error:', err.message);
+//        return next(err);          
+//    }
+//   } catch (err) {
+//    next(err);
+//   }
+// });
 
 
 router.get('/logout', /*cors.cors,*/ (req, res, next) => {
