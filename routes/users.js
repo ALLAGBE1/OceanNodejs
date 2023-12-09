@@ -795,28 +795,57 @@ router.put('/update/password/:userId', async (req, res, next) => {
   const { newpassword } = req.body;
   console.log("password", newpassword);
   try {
-   const user = await User.findById(req.params.userId);
-   if (user != null) {
-    user.setPassword(newpassword, async function(err) {
-      if (err) {
-        return next(err);
-      }
-      await user.save();
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.json(user);
-    });
-   }
-   else {
-       err = new Error('User ' + req.params.userId + ' introuvable');
-       err.status = 404;
-       console.log('Error:', err.message);
-       return next(err);          
-   }
+    const user = await User.findById(req.params.userId);
+    
+    if (user != null) {
+      user.setPassword(newpassword, async function(err) {
+        if (err) {
+          return next(err);
+        }
+        await user.save();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(user);
+      });
+    } else {
+      const err = new Error('User ' + req.params.userId + ' introuvable');
+      err.status = 404;
+      console.log('Error:', err.message);
+      return next(err);
+    }
   } catch (err) {
-   next(err);
+    next(err);
   }
 });
+
+
+
+// router.put('/update/password/:userId', async (req, res, next) => {
+//   const { newpassword } = req.body;
+//   console.log("password", newpassword);
+//   try {
+//    const user = await User.findById(req.params.userId);
+//    if (user != null) {
+//     user.setPassword(newpassword, async function(err) {
+//       if (err) {
+//         return next(err);
+//       }
+//       await user.save();
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json(user);
+//     });
+//    }
+//    else {
+//        err = new Error('User ' + req.params.userId + ' introuvable');
+//        err.status = 404;
+//        console.log('Error:', err.message);
+//        return next(err);          
+//    }
+//   } catch (err) {
+//    next(err);
+//   }
+// });
 
 
 
