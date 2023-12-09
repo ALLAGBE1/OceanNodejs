@@ -16,7 +16,8 @@ var User = new Schema({
       // required: true 
     },
     numero: {
-      type: Number,
+      type: String,
+      // type: Number,
         default: ''
     },
     nomcommercial: {
