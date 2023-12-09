@@ -464,11 +464,11 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
 
   try {
     // Vérifier si le username existe déjà
-    const existingUsername = await User.findOne({ username: req.body.username });
-    if (existingUsername) {
-      // Le username existe déjà
-      errorResponse = { success: false, status: 'Ce nom d\'utilisateur existe déjà. Veuillez choisir un autre nom d\'utilisateur.' };
-    }
+    // const existingUsername = await User.findOne({ username: req.body.username });
+    // if (existingUsername) {
+    //   // Le username existe déjà
+    //   errorResponse = { success: false, status: 'Ce nom d\'utilisateur existe déjà. Veuillez choisir un autre nom d\'utilisateur.' };
+    // }
 
     // Vérifier si l'e-mail existe déjà
     const existingUser = await User.findOne({ email: req.body.email });
