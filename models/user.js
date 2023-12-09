@@ -12,9 +12,8 @@ var User = new Schema({
     },
     email: {
       type: String,
-        // default: ''
       unique: true, 
-      required: true 
+      // required: true 
     },
     numero: {
       type: Number,
