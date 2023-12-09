@@ -470,6 +470,22 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
 
   try {
     console.log("555555555555555555555555555555555555555");
+
+    // Vérifier si le username existe déjà
+    const existingUsername = await User.findOne({ username: req.body.username });
+    if (existingUsername) {
+      // Le username existe déjà
+      return res.status(400).json({ success: false, status: 'Ce nom d\'utilisateur existe déjà. Veuillez choisir un autre nom d\'utilisateur.' });
+    }
+
+    // Vérifier si l'e-mail existe déjà
+    const existingUser = await User.findOne({ email: req.body.email });
+    if (existingUser) {
+      // L'utilisateur avec cet e-mail existe déjà
+      return res.status(400).json({ success: false, status: 'Cet e-mail existe déjà. Veuillez utiliser un autre e-mail.' });
+    }
+
+    // Si le username et l'e-mail n'existent pas, procéder à l'enregistrement
     const user = await User.register(
       new User({ username: req.body.username}),
       req.body.password
@@ -499,17 +515,67 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
     await user.save();
 
     passport.authenticate('local')(req, res, () => {
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.json({ success: true, status: 'Inscription réussie !' });
+      res.status(200).json({ success: true, status: 'Inscription réussie !' });
     });
   } catch (err) {
     console.error(err);
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json');
-    res.json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.', err: err.message, });
+    res.status(500).json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.', err: err.message });
   }
 });
+
+
+
+// router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, next) => {
+//   // Le fichier sera stocké dans req.file grâce à multer
+
+//   // Extraire la longitude et la latitude du corps de la requête
+//   console.log("1111111111111111111111111111");
+//   const location = req.body.location;
+//   console.log("222222222222222222222222222222");
+//   console.log(location);
+
+//   try {
+//     console.log("555555555555555555555555555555555555555");
+//     const user = await User.register(
+//       new User({ username: req.body.username}),
+//       req.body.password
+//     );
+
+//     console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//     if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
+//     if (req.body.numero) user.numero = req.body.numero;
+//     if (req.body.email) user.email = req.body.email;
+//     if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
+//     if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
+
+//     console.log("33333333333333333333333333333");
+
+//     // Si un fichier est téléchargé, sauvegardez le chemin dans la base de données
+//     if (req.file) {
+//       user.documentfournirId = req.file.path;
+//     }
+
+//     // if (req.body.location) user.location = req.body.location;
+//     if (req.body.location) {
+//       user.location = JSON.parse(req.body.location);
+//     }
+
+//     console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
+//     await user.save();
+
+//     passport.authenticate('local')(req, res, () => {
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json({ success: true, status: 'Inscription réussie !' });
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.statusCode = 500;
+//     res.setHeader('Content-Type', 'application/json');
+//     res.json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.', err: err.message, });
+//   }
+// });
 
 
 router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
