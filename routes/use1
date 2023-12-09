@@ -16,13 +16,6 @@ function generateRandomCode() {
   return crypto.randomBytes(3).toString('hex'); // Génère un code hexadécimal de 6 caractères
 }
 
-function generateRandomCode1() {
-  const timestamp = Date.now().toString(); // Utilisez la date actuelle en millisecondes comme composant d'incrémentation
-  const randomCode = crypto.randomBytes(3).toString('hex');
-  return timestamp + '_' + randomCode;
-}
-
-
 
 var router = express.Router();
 router.use(bodyParser.json());
@@ -73,6 +66,12 @@ const upload1 = multer({ storage: storage1, fileFilter: imageFileFilter1 });
 /* GET users listing. */
 router.get('/', (req, res, next) => {
   User.find({})
+    // .then((users) => {
+    //   res.statusCode = 200;
+    //   res.setHeader('Content-Type', 'application/json');
+    //   res.json(users);
+    // })
+    // .catch((err) => next(err));
 
     .then((publicites) => {
       const transformedPublicites = publicites.map(publicite => {
@@ -101,6 +100,37 @@ router.get('/images/:imageName', (req, res, next) => {
     res.status(404).send('Image not found');
   }
 });
+
+// router.route('/')
+//   .get((req, res, next) => {
+//     User.find(req.query)
+//       .then((publicites) => {
+//         const transformedPublicites = publicites.map(publicite => {
+//           publicite = publicite.toObject();
+
+//           let imageName = publicite.photoProfil;
+//           publicite.afficheUrl = `${imageName}`;
+//           return publicite;
+//         })
+
+//         res.statusCode = 200;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json(transformedPublicites); // Utilisez les données transformées
+//       })
+//       .catch((err) => next(err));
+//   });
+
+// router.get('/images/:imageName', (req, res, next) => {
+//   const imageName = req.params.imageName;
+//   const imagePath = path.join(__dirname, 'public/users', imageName);
+
+//   // Vérifiez que le fichier image existe
+//   if (fs.existsSync(imagePath)) {
+//     res.sendFile(imagePath);
+//   } else {
+//     res.status(404).send('Image not found');
+//   }
+// })
 
 
 router.get('/partenaires', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
@@ -187,6 +217,10 @@ router.put('/partenaires/:partenaireId', (req, res, next) => {
 
 // ::::::: Gestion de l'envoie du mail
 async function sendConfirmationEmail(userEmail, userName, verificationCode) {
+  // const verificationCode = generateRandomCode();
+
+  // // Enregistrez le code généré dans la base de données
+  // await saveRandomCodeToDB(User._id, verificationCode);
 
   let transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -328,7 +362,11 @@ router.get('/prestataires/:type', async (req, res, next) => {
 // la distance maximale de recherche en fonction du besoins clients
 router.get('/prestatairesNom/:searchTerm', async (req, res, next) => {
   const { searchTerm } = req.params;
- 
+  // const { lat, lng, distanceMax } = req.query;
+
+  // Utilisation de 500 mètres par défaut si `distanceMax` n'est pas fourni ou n'est pas un nombre valide.
+  // const maxDistanceMeters = parseInt(distanceMax) || 5000;
+  // const maxDistanceMeters = parseInt(distanceMax) || 5000;
 
   try {
     // Recherche géospatiale des prestataires du type spécifié
@@ -336,9 +374,26 @@ router.get('/prestatairesNom/:searchTerm', async (req, res, next) => {
       username: searchTerm,
       prestataire: true,
       disponible: true,
-      
+      // location: { $ne: null },
+      // location: {
+      //   $geoWithin: { $centerSphere: [[lng, lat], maxDistanceMeters / 6378100] }
+      // }
     });
-   
+    // console.log(usersWithDistanceAndDuration);
+
+    // Supposons que la vitesse moyenne est de 50 mètres par minute
+    // const averageSpeedMetersPerMinute = 50;
+  
+    // // Calculer la durée en minutes pour chaque utilisateur trouvé
+    // const usersWithDistanceAndDuration = users.map((user) => {
+    //   const userLat = user.location.coordinates[1]; // Latitude de l'utilisateur
+    //   const userLng = user.location.coordinates[0]; // Longitude de l'utilisateur
+    //   const userDistance = calculateDistance(lat, lng, userLat, userLng);
+    //   const roundedDistance = Math.round(userDistance); // Distance arrondie en mètres
+    //   const durationMinutes = Math.round(roundedDistance / averageSpeedMetersPerMinute); // Durée en minutes
+    //   return { ...user._doc, distance: roundedDistance, duration: durationMinutes };
+    // });
+    // console.log(usersWithDistanceAndDuration);
   
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -375,6 +430,33 @@ router.get('/prestatairesparchoix/', async (req, res, next) => {
     res.json({ success: false, message: err.message });
   }
 });
+
+
+// // ::::::: Gestion de l'envoie du mail
+// async function sendConfirmationEmail(userEmail, userName, verificationToken) {
+//   let transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//       user: 'emailjosue256@gmail.com', // votre email
+//       pass: 'usrgwuokswffsrek', // votre mot de passe
+//     },
+//   });
+
+//   let mailOptions = {
+//     from: 'emailjosue256@gmail.com',
+//     to: userEmail,
+//     subject: 'Confirmation d\'inscription',
+//     text: `Bonjour ${userName}, bienvenue sur notre plateforme. Veuillez confirmer votre inscription en cliquant sur le lien suivant : http://192.168.0.61:3000/confirmation?token=${verificationToken}`,
+//   };
+
+//   transporter.sendMail(mailOptions, function(error, info){
+//     if (error) {
+//       console.log(error);
+//     } else {
+//       console.log('Email envoyé : ' + info.response);
+//     }
+//   });
+// }
 
 
 router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, next) => {
@@ -428,6 +510,193 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
     res.status(400).json(errorResponse);
   }
 });
+
+
+
+// router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, next) => {
+//   // Le fichier sera stocké dans req.file grâce à multer
+
+//   // Extraire la longitude et la latitude du corps de la requête
+//   console.log("1111111111111111111111111111");
+//   const location = req.body.location;
+//   console.log("222222222222222222222222222222");
+//   console.log(location);
+
+//   try {
+//     console.log("555555555555555555555555555555555555555");
+
+
+//     // Vérifier si le username existe déjà
+//     const existingUsername = await User.findOne({ username: req.body.username });
+//     if (existingUsername) {
+//       // Le username existe déjà
+//       return res.status(400).json({ success: false, status: 'Ce nom d\'utilisateur existe déjà. Veuillez choisir un autre nom d\'utilisateur.' });
+//     }
+
+//     // Vérifier si l'e-mail existe déjà
+//     const existingUser = await User.findOne({ email: req.body.email });
+//     if (existingUser) {
+//       // L'utilisateur avec cet e-mail existe déjà
+//       return res.status(400).json({ success: false, status: 'Cet e-mail existe déjà. Veuillez utiliser un autre e-mail.' });
+//     }
+
+//     // Si le numero, le username et l'e-mail n'existent pas, procéder à l'enregistrement
+//     const user = await User.register(
+//       new User({ username: req.body.username}),
+//       req.body.password
+//     );
+
+//     console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//     if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
+//     if (req.body.numero) user.numero = req.body.numero;
+//     if (req.body.email) user.email = req.body.email;
+//     if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
+//     if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
+
+//     console.log("33333333333333333333333333333");
+
+//     // Si un fichier est téléchargé, sauvegardez le chemin dans la base de données
+//     if (req.file) {
+//       user.documentfournirId = req.file.path;
+//     }
+
+//     // if (req.body.location) user.location = req.body.location;
+//     if (req.body.location) {
+//       user.location = JSON.parse(req.body.location);
+//     }
+
+//     console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
+//     await user.save();
+
+//     passport.authenticate('local')(req, res, () => {
+//       res.status(200).json({ success: true, status: 'Inscription réussie !' });
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.', err: err.message });
+//   }
+// });
+
+
+
+// router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, next) => {
+//   // Le fichier sera stocké dans req.file grâce à multer
+
+//   // Extraire la longitude et la latitude du corps de la requête
+//   console.log("1111111111111111111111111111");
+//   const location = req.body.location;
+//   console.log("222222222222222222222222222222");
+//   console.log(location);
+
+//   try {
+//     console.log("555555555555555555555555555555555555555");
+
+//     // Vérifier si le username existe déjà
+//     const existingUsername = await User.findOne({ username: req.body.username });
+//     if (existingUsername) {
+//       // Le username existe déjà
+//       return res.status(400).json({ success: false, status: 'Ce nom d\'utilisateur existe déjà. Veuillez choisir un autre nom d\'utilisateur.' });
+//     }
+
+//     // Vérifier si l'e-mail existe déjà
+//     const existingUser = await User.findOne({ email: req.body.email });
+//     if (existingUser) {
+//       // L'utilisateur avec cet e-mail existe déjà
+//       return res.status(400).json({ success: false, status: 'Cet e-mail existe déjà. Veuillez utiliser un autre e-mail.' });
+//     }
+
+//     // Si le username et l'e-mail n'existent pas, procéder à l'enregistrement
+//     const user = await User.register(
+//       new User({ username: req.body.username}),
+//       req.body.password
+//     );
+
+//     console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//     if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
+//     if (req.body.numero) user.numero = req.body.numero;
+//     if (req.body.email) user.email = req.body.email;
+//     if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
+//     if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
+
+//     console.log("33333333333333333333333333333");
+
+//     // Si un fichier est téléchargé, sauvegardez le chemin dans la base de données
+//     if (req.file) {
+//       user.documentfournirId = req.file.path;
+//     }
+
+//     // if (req.body.location) user.location = req.body.location;
+//     if (req.body.location) {
+//       user.location = JSON.parse(req.body.location);
+//     }
+
+//     console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
+//     await user.save();
+
+//     passport.authenticate('local')(req, res, () => {
+//       res.status(200).json({ success: true, status: 'Inscription réussie !' });
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.', err: err.message });
+//   }
+// });
+
+
+
+// router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, next) => {
+//   // Le fichier sera stocké dans req.file grâce à multer
+
+//   // Extraire la longitude et la latitude du corps de la requête
+//   console.log("1111111111111111111111111111");
+//   const location = req.body.location;
+//   console.log("222222222222222222222222222222");
+//   console.log(location);
+
+//   try {
+//     console.log("555555555555555555555555555555555555555");
+//     const user = await User.register(
+//       new User({ username: req.body.username}),
+//       req.body.password
+//     );
+
+//     console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//     if (req.body.nomprenom) user.nomprenom = req.body.nomprenom;
+//     if (req.body.numero) user.numero = req.body.numero;
+//     if (req.body.email) user.email = req.body.email;
+//     if (req.body.nomcommercial) user.nomcommercial = req.body.nomcommercial;
+//     if (req.body.domaineactivite) user.domaineactivite = req.body.domaineactivite;
+
+//     console.log("33333333333333333333333333333");
+
+//     // Si un fichier est téléchargé, sauvegardez le chemin dans la base de données
+//     if (req.file) {
+//       user.documentfournirId = req.file.path;
+//     }
+
+//     // if (req.body.location) user.location = req.body.location;
+//     if (req.body.location) {
+//       user.location = JSON.parse(req.body.location);
+//     }
+
+//     console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
+//     await user.save();
+
+//     passport.authenticate('local')(req, res, () => {
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json({ success: true, status: 'Inscription réussie !' });
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.statusCode = 500;
+//     res.setHeader('Content-Type', 'application/json');
+//     res.json({ success: false, status: 'Une erreur s\'est produite lors de l\'enregistrement.', err: err.message, });
+//   }
+// });
 
 
 router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
@@ -486,6 +755,17 @@ router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
   })(req, res, next);
 });
 
+// router.get('/images/:imageName', (req, res, next) => {
+//   const imageName = req.params.imageName;
+//   const imagePath = path.join(__dirname, 'public/profile', imageName);
+
+//   // Vérifiez que le fichier image existe
+//   if (fs.existsSync(imagePath)) {
+//     res.sendFile(imagePath);
+//   } else {
+//     res.status(404).send('Image not found');
+//   }
+// })
 
 router.post('/verification', async (req, res, next) => {
   const { username, verificationCode } = req.body;
@@ -524,7 +804,8 @@ router.post('/verification', async (req, res, next) => {
 });
 
 router.put('/update/:userId', (req, res, next) => {
-
+  // const imageUrl = `${req.protocol}://${req.get('host')}/users/${req.file.originalname}`;
+  // const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
 
   User.findById(req.params.userId)
   .then((publicite) => {
@@ -582,6 +863,33 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, r
 });
 
 
+
+// router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, res, next) => {
+//   const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+
+//   User.findById(req.params.userId)
+//     .then((user) => {
+//       if (user != null) {
+//         // Mettez à jour le champ `photoProfil` avec le nouveau chemin de l'image
+//         user.photoProfil = imageUrl;
+
+//         user.save()
+//           .then((updatedUser) => {
+//             res.statusCode = 200;
+//             res.setHeader('Content-Type', 'application/json');
+//             res.json(updatedUser);
+//           })
+//           .catch((err) => next(err));
+//       } else {
+//         const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
+//         err.status = 404;
+//         console.log('Error:', err.message);
+//         return next(err);
+//       }
+//     })
+//     .catch((err) => next(err), console.log('Error:', err.message));
+// });
+
 async function sendResetPasswordEmail(userEmail, userName, verificationCode) {
   let transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -618,7 +926,7 @@ router.post('/forgot-password', async (req, res, next) => {
       throw new Error('L\'adresse e-mail n\'existe pas.');
     }
 
-    const verificationCode = generateRandomCode1();
+    const verificationCode = generateRandomCode();
     // codeVerify
     // await user.setPassword(verificationCode);
     await user.updateOne({ codeVerify: verificationCode });
@@ -696,6 +1004,114 @@ router.put('/update/password/:userId', async (req, res, next) => {
     next(err);
   }
 });
+
+
+
+// router.put('/update/password/:userId', async (req, res, next) => {
+//   const { newpassword } = req.body;
+//   console.log("password", newpassword);
+//   try {
+//    const user = await User.findById(req.params.userId);
+//    if (user != null) {
+//     user.setPassword(newpassword, async function(err) {
+//       if (err) {
+//         return next(err);
+//       }
+//       await user.save();
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json(user);
+//     });
+//    }
+//    else {
+//        err = new Error('User ' + req.params.userId + ' introuvable');
+//        err.status = 404;
+//        console.log('Error:', err.message);
+//        return next(err);          
+//    }
+//   } catch (err) {
+//    next(err);
+//   }
+// });
+
+
+
+// router.put('/update/password', async (req, res, next) => {
+//  const { codeVerify, newpassword } = req.body;
+//  console.log("azertyu", codeVerify);
+//  console.log("password", newpassword);
+//  try {
+//   const user = await User.findOne({ codeVerify: codeVerify });
+//   if (user != null) {
+//     console.log("11111111111111", codeVerify);
+//     console.log("userrrrrrrrrrrrrrr", user);
+//     if(codeVerify == user.codeVerify) {
+//       console.log("222222222222222222", codeVerify);
+//       user.setPassword(newpassword, async function(err) {
+//         if (err) {
+//           return next(err);
+//         }
+//         await user.save();
+//         res.statusCode = 200;
+//         res.setHeader('Content-Type', 'application/json');
+//         res.json(user);
+//       });
+//     } else {
+//       err = new Error('Code de vérification incorrect. Veuillez insérer le bon.');
+//       err.status = 404;
+//       console.log('Error:', err.message);
+//       return next(err); 
+//     } 
+//   }
+//   else {
+//       err = new Error('User ' + codeVerify + ' introuvable');
+//       err.status = 404;
+//       console.log('Error:', err.message);
+//       return next(err);        
+//   }
+//  } catch (err) {
+//   next(err);
+//  }
+// });
+
+
+// router.put('/update/password/:userId', async (req, res, next) => {
+//   const { codeVerify, newpassword } = req.body;
+//   console.log("azertyu", codeVerify);
+//   console.log("password", newpassword);
+//   try {
+//    const user = await User.findById(req.params.userId);
+//    if (user != null) {
+//      console.log("11111111111111", codeVerify);
+//      console.log("userrrrrrrrrrrrrrr", user);
+//      if(codeVerify == user.codeVerify) {
+//        console.log("2222222222222222222", codeVerify);
+//        user.setPassword(newpassword, async function(err) {
+//          if (err) {
+//            return next(err);
+//          }
+//          await user.save();
+//          res.statusCode = 200;
+//          res.setHeader('Content-Type', 'application/json');
+//          res.json(user);
+//        });
+//      } else {
+//        err = new Error('Code de vérification incorrect. Veuillez insérer le bon.');
+//        err.status = 404;
+//        console.log('Error:', err.message);
+//        return next(err); 
+//      } 
+//    }
+//    else {
+//        err = new Error('User ' + req.params.userId + ' introuvable');
+//        err.status = 404;
+//        console.log('Error:', err.message);
+//        return next(err);          
+//    }
+//   } catch (err) {
+//    next(err);
+//   }
+// });
 
 
 router.get('/logout', /*cors.cors,*/ (req, res, next) => {
