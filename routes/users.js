@@ -471,11 +471,6 @@ router.post('/sinscrire', upload.single('documentfournirId'), async (req, res, n
   try {
     console.log("555555555555555555555555555555555555555");
 
-    // Vérifier si le numero est un nombre
-    const numero = req.body.numero;
-    if (numero && isNaN(numero)) {
-      return res.status(400).json({ success: false, status: 'Le numéro doit être un nombre.' });
-    }
 
     // Vérifier si le username existe déjà
     const existingUsername = await User.findOne({ username: req.body.username });
