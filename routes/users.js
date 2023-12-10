@@ -563,36 +563,63 @@ router.put('/update/:userId', (req, res, next) => {
   .catch((err) => next(err));
 });
 
-router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, res, next) => {
-  const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
 
-  User.findById(req.params.userId)
-    .then((user) => {
-      if (user != null) {
-        user.photoProfil = imageUrl;
+router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), async (req, res, next) => {
+  try {
+    const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
 
-        user.save()
-          .then((updatedUser) => {
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.json(updatedUser);
-          })
-          .catch((err) => {
-            console.error('Error saving user:', err);
-            next(err);
-          });
-      } else {
-        const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
-        err.status = 404;
-        console.error('Error:', err.message);
-        return next(err);
-      }
-    })
-    .catch((err) => {
-      console.error('Error finding user:', err);
-      next(err);
-    });
+    const user = await User.findById(req.params.userId);
+
+    if (user != null) {
+      user.photoProfil = imageUrl;
+
+      const updatedUser = await user.save();
+      
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(updatedUser);
+    } else {
+      const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
+      err.status = 404;
+      console.error('Error:', err.message);
+      return next(err);
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    next(err);
+  }
 });
+
+// router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, res, next) => {
+//   const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+
+//   User.findById(req.params.userId)
+//     .then((user) => {
+//       if (user != null) {
+//         user.photoProfil = imageUrl;
+
+//         user.save()
+//           .then((updatedUser) => {
+//             res.statusCode = 200;
+//             res.setHeader('Content-Type', 'application/json');
+//             res.json(updatedUser);
+//           })
+//           .catch((err) => {
+//             console.error('Error saving user:', err);
+//             next(err);
+//           });
+//       } else {
+//         const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
+//         err.status = 404;
+//         console.error('Error:', err.message);
+//         return next(err);
+//       }
+//     })
+//     .catch((err) => {
+//       console.error('Error finding user:', err);
+//       next(err);
+//     });
+// });
 
 
 async function sendResetPasswordEmail(userEmail, userName, verificationCode) {
