@@ -244,6 +244,17 @@ router.get('/prestataires', (req, res, next) => {
     .catch((err) => next(err));
 });
 
+router.get('/prestataire/:userId', (req, res, next) => {
+  User.findById(req.params.userId)
+    .then((user) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(user);
+    })
+    .catch((err) => next(err));
+});
+
+
 // Route pour mettre à jour un prestataire ou (mise à jour de ces coordonnées géographiques)
 router.put('/prestataires/:prestataireId', (req, res, next) => {
   User.findById(req.params.prestataireId) 
