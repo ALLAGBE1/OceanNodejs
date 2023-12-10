@@ -471,6 +471,7 @@ router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
       };
       console.log(response);
       res.json(response);
+      return;
     } catch (error) {
       // Gérer les erreurs ici, si la mise à jour échoue
       res.statusCode = 500;
@@ -482,6 +483,7 @@ router.post('/connexion', /*cors.corsWithOptions,*/ async (req, res, next) => {
       };
       console.error(response);
       res.json(response);
+      return;
     }
   })(req, res, next);
 });
