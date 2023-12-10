@@ -571,13 +571,21 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), async (
     const user = await User.findById(req.params.userId);
 
     if (user != null) {
-      user.photoProfil = imageUrl;
+      // Assurez-vous que le fichier existe avant de l'utiliser
+      if (req.file && req.file.path) {
+        user.photoProfil = imageUrl;
 
-      const updatedUser = await user.save();
-      
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.json(updatedUser);
+        const updatedUser = await user.save();
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(updatedUser);
+      } else {
+        const err = new Error('Fichier image introuvable');
+        err.status = 404;
+        console.error('Error:', err.message);
+        return next(err);
+      }
     } else {
       const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
       err.status = 404;
@@ -589,6 +597,33 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), async (
     next(err);
   }
 });
+
+
+// router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), async (req, res, next) => {
+//   try {
+//     const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+
+//     const user = await User.findById(req.params.userId);
+
+//     if (user != null) {
+//       user.photoProfil = imageUrl;
+
+//       const updatedUser = await user.save();
+      
+//       res.statusCode = 200;
+//       res.setHeader('Content-Type', 'application/json');
+//       res.json(updatedUser);
+//     } else {
+//       const err = new Error('Utilisateur ' + req.params.userId + ' introuvable');
+//       err.status = 404;
+//       console.error('Error:', err.message);
+//       return next(err);
+//     }
+//   } catch (err) {
+//     console.error('Error:', err);
+//     next(err);
+//   }
+// });
 
 // router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), (req, res, next) => {
 //   const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
