@@ -181,7 +181,7 @@ ratingRouter.route('/ratings/:ratingId')
 });
 
 ratingRouter.route('/ratings/allusers/:ratingId')
-.get(authenticate.verifyUser, (req, res, next) => {
+.get((req, res, next) => {
  Ratings.find({ prestataire: req.params.ratingId })
  .populate('author')
  .populate('prestataire')
