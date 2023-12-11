@@ -135,8 +135,8 @@ etoileRouter.route('/:etoileId')
 // Récupérer les étoiles données à un prestataire par son author
 etoileRouter.route('/ratings/:ratingId')
 .get((req, res, next) => {
-    // const { author } = req.query;
-    Ratings.find({ prestataire: req.params.ratingId, })
+    const { author } = req.query;
+    Ratings.find({ prestataire: req.params.ratingId, author})
     .populate('author')
     .then((produits) => {
         res.statusCode = 200;
@@ -144,6 +144,32 @@ etoileRouter.route('/ratings/:ratingId')
         res.json(produits);
     })
     .catch((err) => next(err));
+});
+
+etoileRouter.route('/ratings/users/:ratingId')
+.get((req, res, next) => {
+ console.log("getttttttttttttttttttttttttttttttttttttttt");
+ Ratings.find({ prestataire: req.params.ratingId })
+ .populate('author')
+ .populate('prestataire')
+ .then((produits) => {
+    console.log("555555555555555555555555555555555555");
+     if (produits.length === 0) {
+         const error = new Error('Aucun produit trouvé.');
+         error.status = 404;
+         throw error;
+     }
+    
+    console.log("6666666666666666666666666666666666666666");
+    
+     let ratings = produits.map(product => Number(product.rating));
+     let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+     let average = sum / ratings.length;
+     let prestataire = produits[0].prestataire; // Get the prestataire from the first product
+
+     res.status(200).json({ average: average, prestataire: prestataire });
+ })
+ .catch((err) => next(err)); // Assurez-vous que cette ligne est la dernière dans la chaîne de promesses
 });
 
 
