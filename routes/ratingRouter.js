@@ -186,16 +186,39 @@ ratingRouter.route('/ratings/allusers/:ratingId')
  .populate('author')
  .populate('prestataire')
  .then((produits) => {
+     if (produits.length === 0) {
+         const error = new Error('Aucun produit trouvé.');
+         error.status = 404;
+         throw error;
+     }
+
      let ratings = produits.map(product => Number(product.rating));
      let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
      let average = sum / ratings.length;
      let prestataire = produits[0].prestataire; // Get the prestataire from the first product
 
-     // Ne pas définir manuellement le Content-Type, Express le gère pour vous
      res.status(200).json({ average: average, prestataire: prestataire });
  })
- .catch((err) => next(err));
+ .catch((err) => next(err)); // Assurez-vous que cette ligne est la dernière dans la chaîne de promesses
 });
+
+
+// ratingRouter.route('/ratings/allusers/:ratingId')
+// .get(authenticate.verifyUser, (req, res, next) => {
+//  Ratings.find({ prestataire: req.params.ratingId })
+//  .populate('author')
+//  .populate('prestataire')
+//  .then((produits) => {
+//      let ratings = produits.map(product => Number(product.rating));
+//      let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+//      let average = sum / ratings.length;
+//      let prestataire = produits[0].prestataire; // Get the prestataire from the first product
+
+//      // Ne pas définir manuellement le Content-Type, Express le gère pour vous
+//      res.status(200).json({ average: average, prestataire: prestataire });
+//  })
+//  .catch((err) => next(err));
+// });
 
 
 // ratingRouter.route('/ratings/allusers/:ratingId')
