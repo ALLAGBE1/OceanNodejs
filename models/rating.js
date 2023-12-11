@@ -3,7 +3,8 @@ const Schema = mongoose.Schema;
 
 var ratingSchema = new Schema({
     rating:  {
-        type: String,
+        // type: String,
+        type: Number,
         required: true 
     },
     author: {

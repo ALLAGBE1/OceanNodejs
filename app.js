@@ -13,18 +13,10 @@ var domaineActivites = require('./routes/domaineActivite');
 var publiers = require('./routes/publier');
 var commentaireRouter = require('./routes/commentaireRouter');
 var photoProfilRouter = require('./routes/photoProfilRouter');
+// var ratingRouter = require('./routes/ratingRouter');
 var ratingRouter = require('./routes/ratingRouter');
 
 const cors = require('cors');
-
-// process.on('unhandledRejection', (reason, promise) => {
-//   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-// });
-
-// process.on('uncaughtException', (error) => {
-//   console.error('Uncaught Exception:', error);
-//   process.exit(1); // exit application on uncaught exception
-// });
 
 
 
@@ -51,7 +43,8 @@ app.use('/domaineActivite', domaineActivites);
 app.use('/publier', publiers);
 app.use('/comments',commentaireRouter);
 app.use('/photoProfils',photoProfilRouter);
-app.use('/rating',ratingRouter);
+// app.use('/myrating',ratingRouter);
+app.use('/myrating',ratingRouter);
 
 
 // catch 404 and forward to error handler

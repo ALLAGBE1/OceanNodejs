@@ -6,17 +6,11 @@ const cors = require('./cors');
 
 const Ratings = require('../models/rating');
 
-const etoileRouter = express.Router();
+const ratingRouter = express.Router();
 
-etoileRouter.use(bodyParser.json());
+ratingRouter.use(bodyParser.json());
 
-// etoileRouter.route('/')
-// .get((req,res,next) => {
-//     console.log("Bonjour oui")
-// })
-
-
-etoileRouter.route('/')
+ratingRouter.route('/')
 // .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get((req,res,next) => {
     Ratings.find(req.query)
@@ -28,7 +22,6 @@ etoileRouter.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-// Poster une étoile
 .post(cors.corsWithOptions, (req, res, next) => {
     console.log("posttttttttttttttttttttttttttttttttttttttttttttt")
     if (req.body != null) {
@@ -66,10 +59,10 @@ etoileRouter.route('/')
     .catch((err) => next(err));    
 });
 
-etoileRouter.route('/:etoileId')
+ratingRouter.route('/:commentId')
 // .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get((req,res,next) => {
-    Ratings.findById(req.params.etoileId)
+    Ratings.findById(req.params.commentId)
     .populate('author')
     .then((comment) => {
         res.statusCode = 200;
@@ -80,14 +73,14 @@ etoileRouter.route('/:etoileId')
 })
 .post((req, res, next) => {
     res.statusCode = 403;
-    res.end('POST operation not supported on /comments/'+ req.params.etoileId);
+    res.end('POST operation not supported on /comments/'+ req.params.commentId);
 })
-// Mettre à jour une étoile
+
 .put((req, res, next) => {
-    Ratings.findById(req.params.etoileId)
+    Ratings.findById(req.params.commentId)
     .then((publicite) => {
         if (publicite != null) {
-            Ratings.findByIdAndUpdate(req.params.etoileId, { $set: req.body }, { new: true })
+            Ratings.findByIdAndUpdate(req.params.commentId, { $set: req.body }, { new: true })
             .then((publicite) => {
                 Ratings.findById(publicite._id)
                 .then((publicite) => {
@@ -99,7 +92,7 @@ etoileRouter.route('/:etoileId')
             .catch((err) => next(err));
         }
         else {
-            err = new Error('Publicite ' + req.params.etoileId + ' introuvable');
+            err = new Error('Publicite ' + req.params.commentId + ' introuvable');
             err.status = 404;
             return next(err);            
         }
@@ -107,7 +100,7 @@ etoileRouter.route('/:etoileId')
     .catch((err) => next(err));
 })
 .delete((req, res, next) => {
-    Ratings.findById(req.params.etoileId)
+    Ratings.findById(req.params.commentId)
     .then((comment) => {
         if (comment != null) {
             if (!comment.author.equals(req.user._id)) {
@@ -115,7 +108,7 @@ etoileRouter.route('/:etoileId')
                 err.status = 403;
                 return next(err);
             }
-            Ratings.findByIdAndRemove(req.params.etoileId)
+            Ratings.findByIdAndRemove(req.params.commentId)
             .then((resp) => {
                 res.statusCode = 200;
                 res.setHeader('Content-Type', 'application/json');
@@ -124,7 +117,7 @@ etoileRouter.route('/:etoileId')
             .catch((err) => next(err));
         }
         else {
-            err = new Error('Comment ' + req.params.etoileId + ' not found');
+            err = new Error('Comment ' + req.params.commentId + ' not found');
             err.status = 404;
             return next(err);            
         }
@@ -132,11 +125,11 @@ etoileRouter.route('/:etoileId')
     .catch((err) => next(err));
 });
 
-// Récupérer les étoiles données à un prestataire par son author
-etoileRouter.route('/ratings/:ratingId')
+
+ratingRouter.route('/ratings/:ratingId')
 .get((req, res, next) => {
-    // const { author } = req.query;
-    Ratings.find({ prestataire: req.params.ratingId, })
+    const { author } = req.query;
+    Ratings.find({ prestataire: req.params.ratingId, author })
     .populate('author')
     .then((produits) => {
         res.statusCode = 200;
@@ -146,8 +139,33 @@ etoileRouter.route('/ratings/:ratingId')
     .catch((err) => next(err));
 });
 
+ratingRouter.route('/ratings/users/:ratingId')
+.get((req, res, next) => {
+ console.log("getttttttttttttttttttttttttttttttttttttttt");
+ Ratings.find({ prestataire: req.params.ratingId })
+ .populate('author')
+ .populate('prestataire')
+ .then((produits) => {
+    console.log("555555555555555555555555555555555555");
+     if (produits.length === 0) {
+         const error = new Error('Aucun produit trouvé.');
+         error.status = 404;
+         throw error;
+     }
+    
+    console.log("6666666666666666666666666666666666666666");
+    
+     let ratings = produits.map(product => Number(product.rating));
+     let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+     let average = sum / ratings.length;
+     let prestataire = produits[0].prestataire; // Get the prestataire from the first product
 
-etoileRouter.route('/ratings/superieur/egale/quatre')
+     res.status(200).json({ average: average, prestataire: prestataire });
+ })
+ .catch((err) => next(err)); // Assurez-vous que cette ligne est la dernière dans la chaîne de promesses
+});
+
+ratingRouter.route('/ratings/superieur/egale/quatre')
 .get((req,res,next) => {
     const { lat, lng, distanceMax } = req.query;
 
@@ -189,4 +207,4 @@ etoileRouter.route('/ratings/superieur/egale/quatre')
 })
 
 
-module.exports = etoileRouter;
+module.exports = ratingRouter;
