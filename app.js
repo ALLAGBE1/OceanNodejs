@@ -67,8 +67,10 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   // res.status(err.status || 500);
-  console.error(err.stack);
-  res.status(err.status || 500).json({ error: err.message });
+  // console.error(err.stack);
+  // res.status(err.status || 500).json({ error: err.message });
+    // render the error page
+  res.status(err.status || 500);
   res.render('error');
 });
 
