@@ -22,49 +22,8 @@ ratingRouter.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-
-ratingRouter.route('/ratings/superieur/egale/quatre')
-.get((req,res,next) => {
-    const { lat, lng, distanceMax } = req.query;
-
-    const maxDistanceMeters = parseInt(distanceMax) || 5000;
-  Ratings.aggregate([
-      {
-          $group: {
-              _id: "$prestataire",
-              averageRating: { $avg: { $toInt: "$rating" } },
-              count: { $sum: 1 }
-          }
-      },
-      {
-          $lookup: {
-              from: "users", // nom de la collection du prestataire
-              localField: "_id",
-              foreignField: "_id",
-              as: "prestataire_info"
-          }
-      },
-      { $unwind: "$prestataire_info" },
-      {
-          $match: {
-              averageRating: { $gte: 4 }
-          }
-      },
-      {
-          $sort: {
-              averageRating: -1
-          }
-      }
-  ])
-  .then((ratings) => {
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.json(ratings);
-  }, (err) => next(err))
-  .catch((err) => next(err));
-})
-
 .post(cors.corsWithOptions, (req, res, next) => {
+    console.log("posttttttttttttttttttttttttttttttttttttttttttttt")
     if (req.body != null) {
         // req.body.author = req.user._id;
         Ratings.create(req.body)
@@ -117,7 +76,6 @@ ratingRouter.route('/:commentId')
     res.end('POST operation not supported on /comments/'+ req.params.commentId);
 })
 
-
 .put((req, res, next) => {
     Ratings.findById(req.params.commentId)
     .then((publicite) => {
@@ -167,8 +125,9 @@ ratingRouter.route('/:commentId')
     .catch((err) => next(err));
 });
 
+
 ratingRouter.route('/ratings/:ratingId')
-.get(authenticate.verifyUser, (req, res, next) => {
+.get((req, res, next) => {
     const { author } = req.query;
     Ratings.find({ prestataire: req.params.ratingId, author })
     .populate('author')
@@ -180,18 +139,22 @@ ratingRouter.route('/ratings/:ratingId')
     .catch((err) => next(err));
 });
 
-ratingRouter.route('/ratings/allusers/:ratingId')
+ratingRouter.route('/ratings/users/:ratingId')
 .get((req, res, next) => {
+ console.log("getttttttttttttttttttttttttttttttttttttttt");
  Ratings.find({ prestataire: req.params.ratingId })
  .populate('author')
  .populate('prestataire')
  .then((produits) => {
+    console.log("555555555555555555555555555555555555");
      if (produits.length === 0) {
          const error = new Error('Aucun produit trouvé.');
          error.status = 404;
          throw error;
      }
-
+    
+    console.log("6666666666666666666666666666666666666666");
+    
      let ratings = produits.map(product => Number(product.rating));
      let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
      let average = sum / ratings.length;
@@ -202,41 +165,46 @@ ratingRouter.route('/ratings/allusers/:ratingId')
  .catch((err) => next(err)); // Assurez-vous que cette ligne est la dernière dans la chaîne de promesses
 });
 
+ratingRouter.route('/ratings/superieur/egale/quatre')
+.get((req,res,next) => {
+    const { lat, lng, distanceMax } = req.query;
 
-// ratingRouter.route('/ratings/allusers/:ratingId')
-// .get(authenticate.verifyUser, (req, res, next) => {
-//  Ratings.find({ prestataire: req.params.ratingId })
-//  .populate('author')
-//  .populate('prestataire')
-//  .then((produits) => {
-//      let ratings = produits.map(product => Number(product.rating));
-//      let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-//      let average = sum / ratings.length;
-//      let prestataire = produits[0].prestataire; // Get the prestataire from the first product
-
-//      // Ne pas définir manuellement le Content-Type, Express le gère pour vous
-//      res.status(200).json({ average: average, prestataire: prestataire });
-//  })
-//  .catch((err) => next(err));
-// });
-
-
-// ratingRouter.route('/ratings/allusers/:ratingId')
-// .get(authenticate.verifyUser, (req, res, next) => {
-//  Ratings.find({ prestataire: req.params.ratingId})
-//  .populate('author')
-//  .populate('prestataire')
-//  .then((produits) => {
-//      let ratings = produits.map(product => Number(product.rating));
-//      let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-//      let average = sum / ratings.length;
-//      let prestataire = produits[0].prestataire; // Get the prestataire from the first product
-//      res.statusCode = 200;
-//      res.setHeader('Content-Type', 'application/json');
-//      res.json({average: average, prestataire: prestataire});
-//  })
-//  .catch((err) => next(err));
-// });
+    const maxDistanceMeters = parseInt(distanceMax) || 5000;
+  Ratings.aggregate([
+      {
+          $group: {
+              _id: "$prestataire",
+              averageRating: { $avg: { $toInt: "$rating" } },
+              count: { $sum: 1 }
+          }
+      },
+      {
+          $lookup: {
+              from: "users", // nom de la collection du prestataire
+              localField: "_id",
+              foreignField: "_id",
+              as: "prestataire_info"
+          }
+      },
+      { $unwind: "$prestataire_info" },
+      {
+          $match: {
+              averageRating: { $gte: 4 }
+          }
+      },
+      {
+          $sort: {
+              averageRating: -1
+          }
+      }
+  ])
+  .then((ratings) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(ratings);
+  }, (err) => next(err))
+  .catch((err) => next(err));
+})
 
 
 module.exports = ratingRouter;
