@@ -567,8 +567,8 @@ router.put('/update/:userId', (req, res, next) => {
 router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), async (req, res, next) => {
   console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   try {
-    const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.originalname}`;
-    // const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+    // const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.originalname}`;
+    const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
 
     const user = await User.findById(req.params.userId);
 
