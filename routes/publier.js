@@ -11,13 +11,17 @@ publiers.use(bodyParser.json());
 
 // :::::::::::::::::::::::
 // Configuration de multer pour le stockage des fichiers
+let nameimage = "";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, 'public/publicites'); // Définit le répertoire de stockage
     },
     filename: (req, file, cb) => {
-      cb(null, file.originalname); // Définit le nom du fichier
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      //   cb(null, file.originalname + '-' + uniqueSuffix); // Ajoute un timestamp au nom du fichier
+      nameimage = uniqueSuffix + '-' +  file.originalname;
+      cb(null, nameimage); // Définit le nom du fichier
     }
   });
   
@@ -69,7 +73,7 @@ publiers.route('/')
 
   // Construisez l'URL complète de l'image créée
   // const imageUrl = `${req.protocol}://${req.get('host')}/publier/${req.file.originalname}`;
-  const imageUrl = `https://ocean-52xt.onrender.com/publier/${req.file.originalname}`;
+  const imageUrl = `https://ocean-52xt.onrender.com/publier/${nameimage}`;
 
 
   // Créez la publicité avec l'URL complète de l'image
