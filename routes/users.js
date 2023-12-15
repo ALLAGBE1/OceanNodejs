@@ -49,13 +49,17 @@ const imageFileFilter = (req, file, cb) => {
 const upload = multer({ storage: storage, fileFilter: imageFileFilter });
 
 // ::::::::::::::::::::::
+let nameimage = "";
 
 const storage1 = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'public/users'); // Définit le répertoire de stockage
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname); // Définit le nom du fichier
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      //   cb(null, file.originalname + '-' + uniqueSuffix); // Ajoute un timestamp au nom du fichier
+    nameimage = uniqueSuffix + '-' +  file.originalname;
+    cb(null, nameimage); // Définit le nom du fichier
   }
 });
 
@@ -568,7 +572,7 @@ router.put('/updateImageProfile/:userId', upload1.single('photoProfil'), async (
   console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   try {
     // const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.originalname}`;
-    const imageUrl = `https://ocean-52xt.onrender.com/users/${req.file.originalname}`;
+    const imageUrl = `https://ocean-52xt.onrender.com/users/${nameimage}`;
 
     const user = await User.findById(req.params.userId);
 
