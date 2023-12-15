@@ -146,31 +146,61 @@ etoileRouter.route('/ratings/:ratingId')
     .catch((err) => next(err));
 });
 
-etoileRouter.route('/ratings/users/:ratingId')
-.get((req, res, next) => {
- console.log("getttttttttttttttttttttttttttttttttttttttt");
- Ratings.find({ prestataire: req.params.ratingId })
- .populate('author')
- .populate('prestataire')
- .then((produits) => {
-    console.log("555555555555555555555555555555555555");
-     if (produits.length === 0) {
-         const error = new Error('Aucun produit trouvé.');
-         error.status = 404;
-         throw error;
-     }
-    
-    console.log("6666666666666666666666666666666666666666");
-    
-     let ratings = produits.map(product => Number(product.rating));
-     let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-     let average = sum / ratings.length;
-     let prestataire = produits[0].prestataire; // Get the prestataire from the first product
 
-     res.status(200).json({ average: average, prestataire: prestataire });
- })
- .catch((err) => next(err)); // Assurez-vous que cette ligne est la dernière dans la chaîne de promesses
-});
+etoileRouter.route('/ratings/users/:ratingId')
+  .get((req, res, next) => {
+    console.log("getttttttttttttttttttttttttttttttttttttttt");
+    Ratings.find({ prestataire: req.params.ratingId })
+      .populate('author')
+      .populate('prestataire')
+      .then((produits) => {
+        console.log("555555555555555555555555555555555555");
+        if (produits.length === 0) {
+          const error = new Error('Aucun produit trouvé.');
+          error.status = 404;
+          throw error;
+        }
+
+        console.log("6666666666666666666666666666666666666666");
+
+        let ratings = produits.map(product => Number(product.rating));
+        let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        let average = sum / ratings.length;
+        // Formater l'average pour avoir seulement un chiffre après la virgule
+        average = Number.isInteger(average) ? average : average.toFixed(1);
+        let prestataire = produits[0].prestataire; // Get the prestataire from the first product
+
+        res.status(200).json({ average: average, prestataire: prestataire });
+      })
+      .catch((err) => next(err)); // Assurez-vous que cette ligne est la dernière dans la chaîne de promesses
+  });
+
+
+// etoileRouter.route('/ratings/users/:ratingId')
+// .get((req, res, next) => {
+//  console.log("getttttttttttttttttttttttttttttttttttttttt");
+//  Ratings.find({ prestataire: req.params.ratingId })
+//  .populate('author')
+//  .populate('prestataire')
+//  .then((produits) => {
+//     console.log("555555555555555555555555555555555555");
+//      if (produits.length === 0) {
+//          const error = new Error('Aucun produit trouvé.');
+//          error.status = 404;
+//          throw error;
+//      }
+    
+//     console.log("6666666666666666666666666666666666666666");
+    
+//      let ratings = produits.map(product => Number(product.rating));
+//      let sum = ratings.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+//      let average = sum / ratings.length;
+//      let prestataire = produits[0].prestataire; // Get the prestataire from the first product
+
+//      res.status(200).json({ average: average, prestataire: prestataire });
+//  })
+//  .catch((err) => next(err)); // Assurez-vous que cette ligne est la dernière dans la chaîne de promesses
+// });
 
 
 etoileRouter.route('/ratings/superieur/egale/quatre')
