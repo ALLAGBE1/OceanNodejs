@@ -13,7 +13,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 function generateRandomCode() {
-  return crypto.randomBytes(3).toString('hex'); // Génère un code hexadécimal de 6 caractères
+  return crypto.randomBytes(3).toString('hex'); 
 }
 
 function generateRandomCode1() {
