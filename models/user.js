@@ -48,6 +48,10 @@ var User = new Schema({
       type: String,
       default: 'https://cdn.pixabay.com/photo/2021/07/02/04/48/user-6380868_1280.png'
     },
+    // photoProfil: {  
+    //   type: Buffer, // Changement du type à Buffer
+    //   default: Buffer.from('https://cdn.pixabay.com/photo/2021/07/02/04/48/user-6380868_1280.png') 
+    // },
     confirmation:   {
       type: Boolean,
       default: false
